@@ -70,9 +70,15 @@ class UsersController extends generic_1.CollectionReference {
      * @param data - The updated data for the user.
      * @returns A Promise resolving to the result of the update operation.
      */
-    updateUser(id, data) {
+    async updateUser(id, data) {
         var _a;
-        return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(id) }, { $set: data });
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(id) }, { $set: data }));
+            return result.modifiedCount;
+        }
+        catch (err) {
+            throw err;
+        }
     }
     /**
      * Delete a user.

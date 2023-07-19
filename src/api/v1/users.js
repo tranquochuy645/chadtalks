@@ -49,7 +49,7 @@ router.put('/', jwt_1.verifyToken, async (req, res) => {
         }
         // Update the user document by ID with the specified fields
         const result = await mongodb_1.chatAppDbController.users.updateUser(req.headers.userId, updateData);
-        if (!result) {
+        if (result) {
             return res.status(200).json({ message: 'User updated successfully' });
         }
         res.status(404).json({ message: 'User not found' });
