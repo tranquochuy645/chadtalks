@@ -12,13 +12,47 @@ const setupSocketIO = (server) => {
     const io = new socket_io_1.default.Server(server);
     io.use(jwt_1.verifyTokenViaSocketIO);
     // Set up event handlers for socket connections
-    io.on("connection", (socket) => {
+    io.on("connection", async (socket) => {
+        var _a, _b;
+        const userId = (_b = (_a = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _a === void 0 ? void 0 : _a.headers) === null || _b === void 0 ? void 0 : _b.userId;
+        if (!userId || typeof userId !== "string") {
+            socket.emit("error", { message: "Invalid user" });
+            return socket.disconnect();
+        }
+        let rooms;
+        try {
+            const user = await mongodb_1.chatAppDbController.users.getRooms(userId);
+            rooms = user.rooms.map((room) => room.toString());
+        }
+        catch (e) {
+            return socket.disconnect();
+        }
+        socket.join(userId);
+        mongodb_1.chatAppDbController.users.setStatus(userId, true);
+        socket.emit("ok");
         console.log("A user connected");
         // Handle join meeting event
-        socket.on("join_meet", (uuid) => {
+        socket.on("join_meet", (initData) => {
+            var _a;
             console.log("A user has joined meeting");
-            socket.join(uuid);
-            socket.to(uuid).emit('new_peer', socket.id);
+            //initData: [ original chat room id , meeting uuid]
+            if (!initData || initData.length != 2
+                || !initData[0] || !initData[1]
+                || !rooms.includes(initData[0])) {
+                return socket.disconnect();
+            }
+            socket.join(initData[1]);
+            socket.on("disconnect", () => {
+                var _a, _b;
+                io.to(initData[1]).emit('off_peer', socket.id);
+                //if there is still user in this meeting, return
+                console.log((_a = io.sockets.adapter.rooms.get(initData[1])) === null || _a === void 0 ? void 0 : _a.size);
+                if ((_b = io.sockets.adapter.rooms.get(initData[1])) === null || _b === void 0 ? void 0 : _b.size)
+                    return;
+                //else if all users has left the meeting
+                io.to(initData[0]).emit("end_meet");
+                mongodb_1.chatAppDbController.rooms.setMeeting(initData[0]);
+            });
             socket.on('offer', (msg) => {
                 //msg: [ target socket id, offer data]
                 socket.to(msg[0]).emit('offer', [socket.id, msg[1]]);
@@ -31,29 +65,27 @@ const setupSocketIO = (server) => {
                 //msg: [ target socket id, ice data]
                 socket.to(msg[0]).emit('ice_candidate', [socket.id, msg[1]]);
             });
-            socket.on("disconnect", () => {
-                io.to(uuid).emit('off_peer', socket.id);
-            });
+            // When a user completed setup camera, they send "ok"
+            // Announce that they have joined
+            socket.to(initData[1]).emit('new_peer', socket.id);
+            // Check if this is the first user in the meeting
+            if (((_a = io.sockets.adapter.rooms.get(initData[1])) === null || _a === void 0 ? void 0 : _a.size) == 1) {
+                //anounce the room
+                console.log("first user");
+                socket.to(initData[0]).emit("meet", [userId, initData[0], initData[1], new Date()]);
+                // Set isMeeting to true and save uuid in db
+                mongodb_1.chatAppDbController.rooms.setMeeting(initData[0], initData[1]);
+            }
         });
         // Handle join chat event
         socket.on('join_chat', async () => {
-            var _a, _b, _c;
+            var _a;
             console.log("A user has joined chat");
+            rooms && rooms.length > 0 && rooms.forEach((room) => {
+                socket.join(room);
+            });
             try {
-                const userId = (_b = (_a = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _a === void 0 ? void 0 : _a.headers) === null || _b === void 0 ? void 0 : _b.userId;
-                if (!userId || typeof userId !== "string") {
-                    socket.emit("error", { message: "Invalid user" });
-                    socket.disconnect();
-                    return;
-                }
-                socket.join(userId);
-                mongodb_1.chatAppDbController.users.setStatus(userId, true);
-                const user = await mongodb_1.chatAppDbController.users.getRooms(userId);
-                const rooms = user === null || user === void 0 ? void 0 : user.rooms.map((room) => room.toString());
-                rooms && rooms.length > 0 && rooms.forEach((room) => {
-                    socket.join(room);
-                });
-                if (!((_c = io.sockets.adapter.rooms.get(userId)) === null || _c === void 0 ? void 0 : _c.size)) {
+                if (!((_a = io.sockets.adapter.rooms.get(userId)) === null || _a === void 0 ? void 0 : _a.size)) {
                     // if this socket is the first socket of the user
                     await mongodb_1.chatAppDbController.users.setStatus(userId, true);
                     //Send online signal to all rooms of the user
@@ -67,11 +99,11 @@ const setupSocketIO = (server) => {
                     mongodb_1.chatAppDbController.rooms.saveMessage(userId, msg[0], msg[1], msg[2]);
                 });
                 // Handle call event
-                socket.on("call", (msg) => {
+                socket.on("meet", (msg) => {
                     //msg: [room id, date]
-                    console.log("call:", msg);
-                    const newRoomUUID = (0, uuid_1.v4)();
-                    io.to(msg[0]).emit("call", [userId, newRoomUUID, msg[1]]);
+                    console.log("meet:", msg);
+                    const meeting_uuid = (0, uuid_1.v4)();
+                    socket.emit("meet", [userId, msg[0], meeting_uuid]);
                 });
                 socket.on("disconnect", async () => {
                     var _a;
@@ -100,7 +132,14 @@ const setupSocketIO = (server) => {
             console.log("A user disconnected");
         });
     });
-    const handleRoomsChange = async (change) => {
+    const pipeline_update = [
+        {
+            $match: {
+                'updateDescription.updatedFields': { $exists: true }
+            }
+        }
+    ];
+    const handleRoomsChange = (change) => {
         var _a, _b;
         try {
             if (change.operationType == "update") {
@@ -135,15 +174,8 @@ const setupSocketIO = (server) => {
             console.error(error);
         }
     };
-    const pipeline_1 = [
-        {
-            $match: {
-                'updateDescription.updatedFields': { $exists: true }
-            }
-        }
-    ];
-    mongodb_1.chatAppDbController.watch("rooms", pipeline_1, handleRoomsChange);
-    const handleInvitationsChange = async (change) => {
+    mongodb_1.chatAppDbController.watch("rooms", pipeline_update, handleRoomsChange);
+    const handleInvitationsChange = (change) => {
         try {
             if (change.operationType == "update") {
                 const regex = /^invitations(?:\.\d+)?$/;
@@ -160,11 +192,6 @@ const setupSocketIO = (server) => {
             console.error(error);
         }
     };
-    const pipeline_2 = [{
-            $match: {
-                'updateDescription.updatedFields': { $exists: true }
-            }
-        }];
-    mongodb_1.chatAppDbController.watch("users", pipeline_2, handleInvitationsChange);
+    mongodb_1.chatAppDbController.watch("users", pipeline_update, handleInvitationsChange);
 };
 exports.setupSocketIO = setupSocketIO;

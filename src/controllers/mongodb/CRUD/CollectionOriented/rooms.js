@@ -57,7 +57,9 @@ class RoomsController extends generic_1.CollectionReference {
                 projection: {
                     _id: 0,
                     participants: 1,
-                    messages: 1
+                    messages: 1,
+                    isMeeting: 1,
+                    meeting_uuid: 1
                 }
             }));
             if (!room) {
@@ -172,6 +174,12 @@ class RoomsController extends generic_1.CollectionReference {
         catch (err) {
             throw err;
         }
+    }
+    setMeeting(roomId, uuid) {
+        var _a, _b;
+        if (uuid)
+            return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: true, meeting_uuid: uuid } });
+        return (_b = this._collection) === null || _b === void 0 ? void 0 : _b.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: false, meeting_uuid: null } });
     }
     /**
      * Save a message in a room.
