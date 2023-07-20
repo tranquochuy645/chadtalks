@@ -60,6 +60,7 @@ class UsersController extends generic_1.CollectionReference {
             projection: {
                 fullname: 1,
                 avatar: 1,
+                bio: 1,
                 isOnline: 1,
             }
         }).toArray();

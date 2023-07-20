@@ -47,6 +47,7 @@ const setupSocketIO = (server) => {
                     return;
                 }
                 socket.join(userId);
+                mongodb_1.chatAppDbController.users.setStatus(userId, true);
                 const user = await mongodb_1.chatAppDbController.users.getRooms(userId);
                 const rooms = user === null || user === void 0 ? void 0 : user.rooms.map((room) => room.toString());
                 rooms.length > 0 && rooms.forEach((room) => {
@@ -80,6 +81,7 @@ const setupSocketIO = (server) => {
                     // All sockets of the user have been disconnected
                     // Send offline signal to all rooms of the user
                     rooms.forEach(room => io.to(room).emit("off", userId));
+                    mongodb_1.chatAppDbController.users.setStatus(userId, false);
                     try {
                         await mongodb_1.chatAppDbController.users.setStatus(userId, false);
                     }

@@ -17,44 +17,36 @@
                 "bsonType": "objectId"
             },
             "username": {
-                "bsonType": "string",
-                "description": "must be a string and is required"
+                "bsonType": "string"
             },
             "password": {
-                "bsonType": "string",
-                "description": "must be a string and is required"
+                "bsonType": "string"
             },
             "fullname": {
-                "bsonType": "string",
-                "description": "must be a string and is required"
+                "bsonType": "string"
             },
             "avatar": {
-                "bsonType": "string",
-                "description": "must be a string and is required"
+                "bsonType": "string"
+            },
+            "bio": {
+                "bsonType": "string"
             },
             "rooms": {
                 "bsonType": "array",
-                "description": "must be an array and is required",
                 "items": {
                     "bsonType": ["objectId", "null"]
                 }
             },
             "createdAt": {
-                "bsonType": "date",
-                "description": "must be a date and is required"
+                "bsonType": "date"
             },
             "isOnline": {
-                "bsonType": "bool",
-                "description": "must be a boolean and is required"
+                "bsonType": "bool"
             },
             "invitations": {
                 "bsonType": "array",
-                "description": "must be an array and is required",
                 "items": {
-                    "bsonType": [
-                        "objectId",
-                        "null"
-                    ]
+                    "bsonType": ["objectId", "null"]
                 }
             },
             "lastUpdate": {
