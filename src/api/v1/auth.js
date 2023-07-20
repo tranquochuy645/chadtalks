@@ -61,7 +61,7 @@ router.post('/login', async (req, res) => {
             return res.status(404).json({ message: 'User Not Found' });
         }
         if (!user.password) {
-            throw new Error("password or fullname doesn't exist in the database");
+            throw new Error("password doesn't exist in the database");
         }
         const compResult = await bcrypt_1.default.compare(password, user.password);
         if (compResult) {

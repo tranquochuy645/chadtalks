@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleRegPassword = void 0;
+exports.handleUpdatePassword = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const isWeakPassword_1 = require("../../../lib/isWeakPassword");
-const handleRegPassword = (req, res, next) => {
+const handleUpdatePassword = (req, res, next) => {
     var _a;
     if ((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.password) {
         const password = req.body.password;
@@ -26,6 +26,6 @@ const handleRegPassword = (req, res, next) => {
             }
         });
     }
-    res.status(400).json({ message: "Missing password" });
+    next();
 };
-exports.handleRegPassword = handleRegPassword;
+exports.handleUpdatePassword = handleUpdatePassword;

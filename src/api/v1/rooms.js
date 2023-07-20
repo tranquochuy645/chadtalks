@@ -11,6 +11,9 @@ router.get('/', jwt_1.verifyToken, async (req, res) => {
     try {
         const userId = req.headers.userId;
         const roomsInfo = await mongodb_2.chatAppDbController.roomsExtractor.exec(userId);
+        if (!roomsInfo) {
+            return res.status(404).json({ message: "User not found" });
+        }
         res.status(200).json(roomsInfo);
     }
     catch (error) {

@@ -136,6 +136,44 @@ class RoomsController extends generic_1.CollectionReference {
         }
     }
     /**
+     * Remove a user from all rooms where they are present as a participant or invited.
+     * @param userId - The ID of the user to be removed from rooms.
+     * @returns A Promise resolving to the count of modified documents.
+     */
+    async removeUserFromAllRooms(userId) {
+        var _a, _b;
+        try {
+            // Filter to find rooms where the user is a participant or invited
+            const filter = {
+                $or: [
+                    { participants: new mongodb_1.ObjectId(userId) },
+                    { invited: new mongodb_1.ObjectId(userId) }
+                ]
+            };
+            // Update operation to remove the user from participants and invited arrays
+            const update = {
+                $pull: {
+                    participants: new mongodb_1.ObjectId(userId),
+                    invited: new mongodb_1.ObjectId(userId),
+                },
+            };
+            // Use find to get all matching rooms
+            const rooms = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.find(filter, { projection: { _id: 1 } }).toArray());
+            let modifiedCount = 0;
+            // Use a for...of loop to ensure each update operation is executed sequentially
+            for (const room of rooms) {
+                const result = await ((_b = this._collection) === null || _b === void 0 ? void 0 : _b.updateOne({ _id: new mongodb_1.ObjectId(room._id) }, update));
+                if (result === null || result === void 0 ? void 0 : result.modifiedCount) {
+                    modifiedCount += result.modifiedCount;
+                }
+            }
+            return modifiedCount;
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+    /**
      * Save a message in a room.
      * @param sender - The ID of the message sender.
      * @param roomId - The ID of the room.

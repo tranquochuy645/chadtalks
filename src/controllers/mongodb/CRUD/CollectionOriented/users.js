@@ -82,21 +82,36 @@ class UsersController extends generic_1.CollectionReference {
         }
     }
     /**
-     * Delete a user.
-     * @param id - The ID of the user to be deleted.
-     * @returns A Promise resolving to the result of the deletion operation.
-     */
-    //   public deleteUser(id: string): Promise<any> {
-    //     // TODO: Implement user deletion logic.
-    //   }
-    /**
-     * Get the password of a user.
-     * @param username - The username of the user.
-     * @returns A Promise resolving to the user's password.
-     */
-    getPassword(username) {
+   * Delete a user.
+   * @param id - The ID of the user to be deleted.
+   * @returns A Promise resolving to the result of the deletion operation.
+   */
+    async deleteUser(id) {
         var _a;
-        return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({ username: username }, { projection: { password: 1 } });
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.deleteOne({ _id: new mongodb_1.ObjectId(id) }));
+            return result.deletedCount;
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+    /**
+   * Get the password of a user.
+   * @param username - The username of the user (optional).
+   * @param userId - The ID of the user (optional).
+   * @returns A Promise resolving to the user's password. Will reject if both the username and userId are missing
+   */
+    getPassword(username, userId) {
+        var _a, _b;
+        if (userId) {
+            return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({ _id: new mongodb_1.ObjectId(userId) }, { projection: { password: 1 } });
+        }
+        if (username) {
+            return (_b = this._collection) === null || _b === void 0 ? void 0 : _b.findOne({ username: username }, { projection: { password: 1 } });
+        }
+        // Handle the case where both username and userId are undefined
+        return Promise.reject("Require at least one username or userId");
     }
     /**
      * Set the online status of a user.

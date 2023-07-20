@@ -40,7 +40,7 @@ class RoomsExtractor {
         try {
             const roomIds = await this.getRoomIds(userId);
             let data = [];
-            if (roomIds.length > 0) {
+            if (roomIds && roomIds.length > 0) {
                 const roomsInfo = await this._roomsController.getParticipantLists({ $or: roomIds });
                 data = await Promise.all(roomsInfo.map(async (room) => {
                     const participantIds = room.participants;

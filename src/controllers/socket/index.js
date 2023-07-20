@@ -50,7 +50,7 @@ const setupSocketIO = (server) => {
                 mongodb_1.chatAppDbController.users.setStatus(userId, true);
                 const user = await mongodb_1.chatAppDbController.users.getRooms(userId);
                 const rooms = user === null || user === void 0 ? void 0 : user.rooms.map((room) => room.toString());
-                rooms.length > 0 && rooms.forEach((room) => {
+                rooms && rooms.length > 0 && rooms.forEach((room) => {
                     socket.join(room);
                 });
                 if (!((_c = io.sockets.adapter.rooms.get(userId)) === null || _c === void 0 ? void 0 : _c.size)) {
