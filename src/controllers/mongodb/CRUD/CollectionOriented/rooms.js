@@ -44,28 +44,31 @@ class RoomsController extends generic_1.CollectionReference {
      * @param whoSearch - The user searching for the room.
      * @param roomId - The ID of the room to retrieve.
      * @param messagesLimit - The limit of messages to retrieve.
+     * @param skip - Optional. The number of messages to skip from the beginning.
      * @returns A Promise resolving to the room details object.
      * @throws Error if the room is not found or the user is not a member of the room.
      */
-    async getRoom(whoSearch, roomId, messagesLimit) {
+    async getRoom(whoSearch, roomId, messagesLimit, skip) {
         var _a;
         try {
-            let room = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({
+            const room = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({
                 _id: new mongodb_1.ObjectId(roomId),
-                participants: { $in: [new mongodb_1.ObjectId(whoSearch)] }
+                participants: new mongodb_1.ObjectId(whoSearch)
             }, {
                 projection: {
                     _id: 0,
                     participants: 1,
-                    messages: 1,
+                    messages: {
+                        $slice: Number.isInteger(skip) ? [skip, messagesLimit] : -messagesLimit
+                    },
+                    conversationLength: { $cond: { if: { $isArray: "$messages" }, then: { $size: "$messages" }, else: "NA" } },
                     isMeeting: 1,
                     meeting_uuid: 1
                 }
             }));
             if (!room) {
-                throw new Error("Room not found || Not a member of the room");
+                throw new Error("Room not found or user is not a member of the room");
             }
-            room.messages = room.messages.slice(-messagesLimit);
             return room;
         }
         catch (err) {

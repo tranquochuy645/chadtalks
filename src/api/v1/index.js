@@ -13,7 +13,7 @@ const router = (0, express_1.Router)();
 // Create a rate limiter middleware for general routes
 const generalLimiter = (0, express_rate_limit_1.default)({
     windowMs: 60 * 1000,
-    max: 100,
+    max: 1000,
     message: 'Too many requests from this IP, please try again later.',
 });
 // Create a rate limiter middleware specifically for the /auth route
