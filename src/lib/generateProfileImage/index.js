@@ -8,12 +8,14 @@ function generateProfileImage(initials) {
     const background = getRandomColor(); // Random background color
     const textColor = getContrastingColor(background); // Text color based on the background color
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-      <rect width="100%" height="100%" fill="${background}" />
-      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="${fontSize}px" font-weight="${fontWeight}" fill="${textColor}">
-        ${initials.toUpperCase()}
-      </text>
-    </svg>`;
-    return `data:image/svg+xml;base64,${btoa(svg)}`;
+    <rect width="100%" height="100%" fill="${background}" />
+    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="${fontSize}px" font-weight="${fontWeight}" fill="${textColor}">
+      ${initials.toUpperCase()}
+    </text>
+  </svg>`;
+    // Convert the SVG string to a Blob
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+    return svgBlob;
 }
 exports.generateProfileImage = generateProfileImage;
 function getRandomColor() {

@@ -8,7 +8,7 @@ const Setup_1 = __importDefault(require("./Setup"));
 const Connection_1 = __importDefault(require("./Connection"));
 const users_1 = __importDefault(require("./CRUD/CollectionOriented/users"));
 const rooms_1 = __importDefault(require("./CRUD/CollectionOriented/rooms"));
-const meetings_1 = __importDefault(require("./CRUD/CollectionOriented/meetings"));
+const media_1 = __importDefault(require("./CRUD/CollectionOriented/media"));
 const roomsExtractor_1 = __importDefault(require("./CRUD/Combined/roomsExtractor"));
 const Watcher_1 = __importDefault(require("./Watcher"));
 /**
@@ -41,7 +41,7 @@ class DatabaseController extends Setup_1.default {
         this._watcher = new Watcher_1.default(this.db, DatabaseController._collectionNames);
         this._users = new users_1.default(this.db.collection("users"));
         this._rooms = new rooms_1.default(this.db.collection("rooms"));
-        this._meetings = new meetings_1.default(this.db.collection("meetings"));
+        this._media = new media_1.default(this.db.collection("meetings"));
         this._roomsExtractor = new roomsExtractor_1.default(this._users, this._rooms);
     }
     /**
@@ -79,10 +79,10 @@ class DatabaseController extends Setup_1.default {
      * @throws Error if the MeetingsController instance is not initialized.
      * @returns The MeetingsController instance.
      */
-    get meetings() {
-        if (!this._meetings)
-            throw new Error("MEETINGS NOT INITIALIZED");
-        return this._meetings;
+    get media() {
+        if (!this._media)
+            throw new Error("MEDIA NOT INITIALIZED");
+        return this._media;
     }
     /**
      * Get the RoomsExtractor instance for extracting rooms data based on user ID.
@@ -95,7 +95,7 @@ class DatabaseController extends Setup_1.default {
         return this._roomsExtractor;
     }
 }
-DatabaseController._collectionNames = ["users", "rooms", "meetings"];
+DatabaseController._collectionNames = ["users", "rooms", "media"];
 const chatAppDbController = DatabaseController.getInstance();
 exports.chatAppDbController = chatAppDbController;
 exports.default = DatabaseController;

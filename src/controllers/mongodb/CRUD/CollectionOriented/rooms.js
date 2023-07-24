@@ -178,6 +178,14 @@ class RoomsController extends generic_1.CollectionReference {
             throw err;
         }
     }
+    /**
+    * Set the meeting status and UUID for a room.
+    * @param roomId - The ID of the room.
+    * @param uuid - Optional. The UUID of the meeting.
+    *              If uuid is not provided, isMeeting is set to false, and the current UUID will be removed.
+    *              Otherwise, a new UUID will be set, and isMeeting will be set to true.
+    * @returns A Promise resolving to the count of modified documents.
+    */
     setMeeting(roomId, uuid) {
         var _a, _b;
         if (uuid)
@@ -185,12 +193,13 @@ class RoomsController extends generic_1.CollectionReference {
         return (_b = this._collection) === null || _b === void 0 ? void 0 : _b.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: false, meeting_uuid: null } });
     }
     /**
-     * Save a message in a room.
-     * @param sender - The ID of the message sender.
-     * @param roomId - The ID of the room.
-     * @param content - The content of the message.
-     * @param timestamp - The timestamp of the message.
-     */
+   * Save a message in a room.
+   * @param sender - The ID of the message sender.
+   * @param roomId - The ID of the room.
+   * @param content - The content of the message.
+   * @param timestamp - The timestamp of the message.
+   * @throws Error if there's an issue while saving the message.
+   */
     async saveMessage(sender, roomId, content, timestamp) {
         var _a;
         try {
