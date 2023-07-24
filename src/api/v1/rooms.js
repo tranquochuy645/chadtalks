@@ -55,23 +55,17 @@ router.post('/', jwt_1.verifyToken, async (req, res) => {
             }
             throw new Error("Invalid id");
         });
-        const newRoom = {
-            type: "default",
-            invited: oIdList,
-            participants: [creator_userOId],
-            messages: []
-        };
-        const insertedRoom = await mongodb_2.chatAppDbController.rooms.createRoom(newRoom);
+        const insertedRoom = await mongodb_2.chatAppDbController.rooms.createRoom(req.headers.userId, req.body.invited);
         // return modified count
         if (!insertedRoom) {
             throw new Error("Deo biet sao bug luon");
         }
-        const updateCreatorRoomsList = await mongodb_2.chatAppDbController.users.joinRoom(creator_userId, insertedRoom.insertedId.toString());
+        const updateCreatorRoomsList = await mongodb_2.chatAppDbController.users.joinRoom(creator_userId, insertedRoom.toString());
         if (!updateCreatorRoomsList) {
             throw new Error("Error updating creator rooms list");
         }
         // return modified count
-        const updateUsersInvitationList = await mongodb_2.chatAppDbController.users.updateMany({ _id: { $in: oIdList } }, { $push: { invitations: insertedRoom.insertedId } });
+        const updateUsersInvitationList = await mongodb_2.chatAppDbController.users.updateMany({ _id: { $in: oIdList } }, { $push: { invitations: insertedRoom } });
         if (updateUsersInvitationList == oIdList.length) {
             return res.status(200).json({ message: "Created Room Successfully" });
         }

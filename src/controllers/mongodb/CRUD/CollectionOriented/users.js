@@ -2,6 +2,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongodb_1 = require("mongodb");
 const generic_1 = require("./generic");
+class User {
+    constructor(username, password) {
+        this.username = username;
+        this.password = password;
+        this.fullname = username;
+        this.avatar = "";
+        this.isOnline = false;
+        this.invitations = [];
+        this.rooms = [];
+        this.createdAt = new Date();
+    }
+}
 /**
  * UsersController class for handling user-related operations.
  */
@@ -19,11 +31,21 @@ class UsersController extends generic_1.CollectionReference {
     /**
      * Create a new user.
      * @param newUser - The user object to be created.
-     * @returns A Promise resolving to the result of the insertion operation.
+     * @returns A Promise resolving to the created user objectId
      */
-    createUser(newUser) {
+    async createUser(username, password) {
         var _a;
-        return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.insertOne(newUser);
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.insertOne(new User(username, password)));
+            // Return the inserted ID
+            if (result && result.insertedId) {
+                return result.insertedId;
+            }
+            throw new Error("User insertion failed.");
+        }
+        catch (err) {
+            throw err;
+        }
     }
     /**
      * Read the full profile of a user.

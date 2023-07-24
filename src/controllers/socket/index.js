@@ -139,23 +139,25 @@ const setupSocketIO = (server) => {
             }
         }
     ];
-    const handleRoomsChange = (change) => {
+    const handleChange = (change) => {
         var _a, _b;
         try {
             if (change.operationType == "update") {
-                const regex = /^participants(?:\.\d+)?$/;
-                const joinEventRegex = /^participants\.\d+$/;
+                // const regex = /^rooms(?:\.\d+)?$/;;
                 const updatedFields = change.updateDescription.updatedFields || {};
-                if (!Object.keys(updatedFields).some(key => regex.test(key))) {
-                    // not changes in participants
-                    return;
-                }
-                const roomId = change.documentKey._id.toString();
-                const joinedPal = Object.keys(updatedFields).find(key => joinEventRegex.test(key));
-                if (joinedPal) {
-                    // if it matches the join regex then a new user joined the room
-                    const user = (_a = updatedFields[joinedPal]) === null || _a === void 0 ? void 0 : _a.toString();
-                    (_b = io.sockets.adapter.rooms.get(user)) === null || _b === void 0 ? void 0 : _b.forEach(
+                const userId = change.documentKey._id.toString();
+                const joinEventRegex = /^rooms\.\d+$/;
+                const joinedRoomKey = Object.keys(updatedFields).find(key => joinEventRegex.test(key));
+                if (joinedRoomKey) {
+                    // if it matches the join regex then the user joined a new room
+                    const roomId = (_a = updatedFields[joinedRoomKey]) === null || _a === void 0 ? void 0 : _a.toString();
+                    // send a signal for users in that room to refresh
+                    io.to(roomId).emit('room');
+                    // send a signal for the new user to refresh
+                    io.to(userId).emit('room');
+                    // emit the signal to the user before joining them the room's socket ids to avoid bugs
+                    // it won't duplicate the signal
+                    (_b = io.sockets.adapter.rooms.get(userId)) === null || _b === void 0 ? void 0 : _b.forEach(
                     // get all the socket ids of that user
                     socketId => {
                         var _a;
@@ -163,35 +165,20 @@ const setupSocketIO = (server) => {
                         (_a = io.sockets.sockets.get(socketId)) === null || _a === void 0 ? void 0 : _a.join(roomId);
                     });
                 }
-                // if it doesn't match the join regex then a user left the room
+                // if it doesn't match the join regex then the user left a room
                 // TODO: when a user left a room in database,
                 // must force the user to leave the socket.io room
-                // send a signal for users to refresh
-                io.to(roomId).emit('room');
-            }
-        }
-        catch (error) {
-            console.error(error);
-        }
-    };
-    mongodb_1.chatAppDbController.watch("rooms", pipeline_update, handleRoomsChange);
-    const handleInvitationsChange = (change) => {
-        try {
-            if (change.operationType == "update") {
-                const regex = /^invitations(?:\.\d+)?$/;
-                const updatedFields = change.updateDescription.updatedFields || {};
-                if (!Object.keys(updatedFields).some(key => regex.test(key))) {
-                    // not changes in invitations
-                    return;
+                const invsRegex = /^invitations(?:\.\d+)?$/;
+                if (Object.keys(updatedFields).some(key => invsRegex.test(key))) {
+                    // changes in invitations
+                    io.to(userId).emit('inv');
                 }
-                const userId = change.documentKey._id.toString();
-                io.to(userId).emit('inv');
             }
         }
         catch (error) {
             console.error(error);
         }
     };
-    mongodb_1.chatAppDbController.watch("users", pipeline_update, handleInvitationsChange);
+    mongodb_1.chatAppDbController.watch("users", pipeline_update, handleChange);
 };
 exports.setupSocketIO = setupSocketIO;

@@ -9,7 +9,7 @@ const conf = {
     aws_region: process.env.AWS_REGION || "",
     aws_accessKeyId: process.env.AWS_ACCESS_KEY || "",
     aws_secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-    port: process.env.PORT || ""
+    port: process.env.PORT || "",
 };
 // Validate if any child property is null or undefined
 for (const prop in conf) {

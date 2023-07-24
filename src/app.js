@@ -9,8 +9,10 @@ const api_1 = __importDefault(require("./api"));
 const jsonFilter_1 = require("./middlewares/express/jsonFilter");
 const app = (0, express_1.default)();
 const publicPath = path_1.default.resolve(__dirname, '../public');
+const mediaPath = path_1.default.resolve(__dirname, '../media');
 const indexPath = path_1.default.join(publicPath, 'index.html');
 app.use(express_1.default.static(publicPath));
+app.use('/media', express_1.default.static(mediaPath));
 app.use('/api', express_1.default.json(), jsonFilter_1.filterJsonError, api_1.default);
 app.get('*', (req, res) => {
     res.sendFile(indexPath);

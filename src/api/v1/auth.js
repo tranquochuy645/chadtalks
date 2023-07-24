@@ -5,10 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const generateAuthToken_1 = require("../../lib/generateAuthToken");
+const DefaultProfileImage_1 = require("../../lib/DefaultProfileImage");
 const handleRegPassword_1 = require("../../middlewares/express/handleRegPassword");
 const mongodb_1 = require("../../controllers/mongodb");
-const newUserConstructor_1 = __importDefault(require("../../lib/newUserConstructor"));
-const newMediaConstructor_1 = __importDefault(require("../../lib/newMediaConstructor"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const router = (0, express_1.Router)();
 // POST /api/v1/auth/register
@@ -23,26 +22,22 @@ router.post('/register', handleRegPassword_1.handleRegPassword, async (req, res)
         }
         const isAvailableUserName = await mongodb_1.chatAppDbController.users.checkAvailableUserName(username);
         if (isAvailableUserName) {
-            const newUser = new newUserConstructor_1.default(username, password);
-            const result = await mongodb_1.chatAppDbController.users.createUser(newUser);
-            if (!result) {
-                throw new Error(`Error creating user`);
-            }
-            // const newDefaultAvatarBlob = generateProfileImage(username.charAt(0))
-            const metadata = {
-                uploaderId: result.insertedId,
-                privacy: "public",
-                uploadTimestamp: new Date()
-            };
-            const mediaType = "image/svg";
-            const newMedia = new newMediaConstructor_1.default("some string", mediaType, metadata);
-            const mediaOId = await mongodb_1.chatAppDbController.media.saveMedia(newMedia);
-            const mediaUrl = `/media/${mediaOId.toString()}`;
-            await mongodb_1.chatAppDbController.users.updateUser(result.insertedId.toString(), {
+            const insertedUser = await mongodb_1.chatAppDbController.users.createUser(username, password);
+            const avatar = new DefaultProfileImage_1.DefaultProfileImage(username.charAt(0)); // svg content
+            const path = `media/${insertedUser.toString()}/avatar.svg`;
+            avatar.write(path);
+            // const metadata = {
+            //   uploaderId: insertedUser,
+            //   privacy: "public",
+            //   uploadTimestamp: new Date()
+            // }
+            // const mediaType = "image/svg"
+            // const mediaOId = await dc.media.saveMedia(path, mediaType, metadata)
+            await mongodb_1.chatAppDbController.users.updateUser(insertedUser.toString(), {
                 invitations: [mongodb_1.chatAppDbController.globalChatId],
-                avatar: mediaUrl
+                avatar: path
             });
-            await mongodb_1.chatAppDbController.rooms.pushToInvitedList(result.insertedId.toString(), mongodb_1.chatAppDbController.globalChatId.toString());
+            await mongodb_1.chatAppDbController.rooms.pushToInvitedList(insertedUser.toString(), mongodb_1.chatAppDbController.globalChatId.toString());
             return res.status(200).json({ message: 'Created account successfully' });
         }
         return res.status(409).json({ message: 'Username already exists' });

@@ -3,17 +3,55 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongodb_1 = require("mongodb");
 const generic_1 = require("./generic");
 /**
+* Room class representing a room object.
+*/
+class Room {
+    /**
+     * Create a new Room object.
+     * @param creator - The ID of the user creating the room (room owner).
+     * @param invited - An array of user IDs to invite to the room.
+     * @param type - Optional. The type of the room. Default is "default".
+     */
+    constructor(creator, invited, type = "default") {
+        if (!mongodb_1.ObjectId.isValid(creator))
+            throw new Error("Invalid creator user id");
+        // Validate the type field to allow only "global" or "default"
+        if (type !== "global" && type !== "default") {
+            throw new Error("Invalid value for 'type' field. It should be 'global' or 'default'.");
+        }
+        this.type = type;
+        this.invited = invited.map(id => {
+            if (!mongodb_1.ObjectId.isValid(id))
+                throw new Error("Invalid invited id");
+            return new mongodb_1.ObjectId(id);
+        });
+        this.participants = [new mongodb_1.ObjectId(creator)];
+        this.messages = [];
+        this.isMeeting = false; // Set the default value for isMeeting
+        this.meeting_uuid = null; // Set the default value for meeting_uuid
+    }
+}
+/**
  * RoomsController class for handling room-related operations.
  */
 class RoomsController extends generic_1.CollectionReference {
     /**
      * Create a new room.
      * @param newRoom - The room object to be created.
-     * @returns A Promise resolving to the result of the insertion operation.
+     * @returns A Promise resolving to the inserted room objectId
      */
-    createRoom(newRoom) {
+    async createRoom(creator, invited, type = "default") {
         var _a;
-        return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.insertOne(newRoom);
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.insertOne(new Room(creator, invited, type)));
+            if (result && result.insertedId) {
+                return result.insertedId;
+            }
+            throw new Error("Room insertion failed.");
+        }
+        catch (err) {
+            throw err;
+        }
     }
     /**
      * Retrieve the participant lists for rooms matching the filter.

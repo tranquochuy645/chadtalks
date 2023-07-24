@@ -25,7 +25,10 @@
                 "bsonType": "string"
             },
             "avatar": {
-                "bsonType": "string"
+                "bsonType": [
+                    "string",
+                    "objectId"
+                ]
             },
             "bio": {
                 "bsonType": "string"
@@ -33,7 +36,10 @@
             "rooms": {
                 "bsonType": "array",
                 "items": {
-                    "bsonType": ["objectId", "null"]
+                    "bsonType": [
+                        "objectId",
+                        "null"
+                    ]
                 }
             },
             "createdAt": {
@@ -45,7 +51,10 @@
             "invitations": {
                 "bsonType": "array",
                 "items": {
-                    "bsonType": ["objectId", "null"]
+                    "bsonType": [
+                        "objectId",
+                        "null"
+                    ]
                 }
             },
             "lastUpdate": {
