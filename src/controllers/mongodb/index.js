@@ -41,7 +41,7 @@ class DatabaseController extends Setup_1.default {
         this._watcher = new Watcher_1.default(this.db, DatabaseController._collectionNames);
         this._users = new users_1.default(this.db.collection("users"));
         this._rooms = new rooms_1.default(this.db.collection("rooms"));
-        this._media = new media_1.default(this.db.collection("meetings"));
+        this._media = new media_1.default(this.db.collection("media"));
         this._roomsExtractor = new roomsExtractor_1.default(this._users, this._rooms);
     }
     /**

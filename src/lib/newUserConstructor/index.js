@@ -1,15 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class User {
-    constructor(username, password, fullname, avatar, isOnline, invitations, rooms, createdAt) {
+    constructor(username, password) {
         this.username = username;
         this.password = password;
-        this.fullname = fullname;
-        this.avatar = avatar;
-        this.isOnline = isOnline;
-        this.invitations = invitations;
-        this.rooms = rooms;
-        this.createdAt = createdAt;
+        this.fullname = username;
+        this.avatar = "";
+        this.isOnline = false;
+        this.invitations = [];
+        this.rooms = [];
+        this.createdAt = new Date();
     }
 }
 exports.default = User;
