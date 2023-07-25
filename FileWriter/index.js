@@ -7,7 +7,7 @@ class FileWriter {
     /**
      * Write data to a file in the prefixed directory.
      * @param subPath - The sub path inside the prefixed directory where the file will be written.
-     * @param data - The data to be written to the file.
+     * @param data - The data to be written to the file. It can be a string or a Buffer (array buffer view).
      */
     static write(subPath, data) {
         try {
@@ -17,7 +17,7 @@ class FileWriter {
             if (!(0, fs_1.existsSync)(directory)) {
                 (0, fs_1.mkdirSync)(directory, { recursive: true });
             }
-            (0, fs_1.writeFileSync)(filePath, data, { encoding: 'utf8', flag: 'w' });
+            (0, fs_1.writeFileSync)(filePath, data);
             console.log(`File written successfully to: ${filePath}`);
         }
         catch (error) {

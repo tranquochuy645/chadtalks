@@ -4,11 +4,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const jwt_1 = require("../../middlewares/express/jwt");
-const mongodb_1 = require("../../controllers/mongodb");
+const jwt_1 = require("../../../middlewares/express/jwt");
+const mongodb_1 = require("../../../controllers/mongodb");
 const mongodb_2 = require("mongodb");
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const handleUpdatePassword_1 = require("../../middlewares/express/handleUpdatePassword");
+const handleUpdatePassword_1 = require("../../../middlewares/express/handleUpdatePassword");
 const router = (0, express_1.Router)();
 // GET /api/v1/users
 router.get('/', jwt_1.verifyToken, async (req, res) => {
@@ -49,6 +49,9 @@ router.put('/', jwt_1.verifyToken, handleUpdatePassword_1.handleUpdatePassword, 
                 return res.status(403).json({ message: "Password mismatch" });
             }
         }
+        // if (updateData.avatar) {
+        //   FileWriter.write(`${req.headers.userId as string}/avatar`, updateData.avatar)
+        // }
         const result = await mongodb_1.chatAppDbController.users.updateUser(req.headers.userId, updateData);
         if (result) {
             return res.status(200).json({ message: 'User updated successfully' });

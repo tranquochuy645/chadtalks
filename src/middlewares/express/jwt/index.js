@@ -1,13 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyToken = void 0;
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const config_1 = __importDefault(require("../../../config"));
+const getTokenPayload_1 = require("../../../lib/getTokenPayload");
 const verifyToken = (req, res, next) => {
-    const secretKey = config_1.default.jwt_key;
     let type;
     try {
         type = req.headers.authorization.split(' ')[0];
@@ -25,9 +20,8 @@ const verifyToken = (req, res, next) => {
     }
     ;
     try {
-        const { userId, fullname } = jsonwebtoken_1.default.verify(token, secretKey);
+        const { userId } = (0, getTokenPayload_1.getTokenPayload)(token);
         req.headers.userId = userId;
-        req.headers.fullname = fullname;
         next();
     }
     catch (error) {

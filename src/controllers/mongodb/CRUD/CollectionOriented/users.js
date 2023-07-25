@@ -122,7 +122,9 @@ class UsersController extends generic_1.CollectionReference {
    * Get the password of a user.
    * @param username - The username of the user (optional).
    * @param userId - The ID of the user (optional).
-   * @returns A Promise resolving to the user's password. Will reject if both the username and userId are missing
+   * @returns A Promise resolving to the user's _id and password.
+   *  Will reject if both the username and userId are missing
+   *
    */
     getPassword(username, userId) {
         var _a, _b;

@@ -4,10 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const generateAuthToken_1 = require("../../lib/generateAuthToken");
-const DefaultProfileImage_1 = require("../../lib/DefaultProfileImage");
-const handleRegPassword_1 = require("../../middlewares/express/handleRegPassword");
-const mongodb_1 = require("../../controllers/mongodb");
+const generateAuthToken_1 = require("../../../lib/generateAuthToken");
+const DefaultProfileImage_1 = require("../../../lib/DefaultProfileImage");
+const handleRegPassword_1 = require("../../../middlewares/express/handleRegPassword");
+const mongodb_1 = require("../../../controllers/mongodb");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const router = (0, express_1.Router)();
 // POST /api/v1/auth/register
@@ -24,15 +24,8 @@ router.post('/register', handleRegPassword_1.handleRegPassword, async (req, res)
         if (isAvailableUserName) {
             const insertedUser = await mongodb_1.chatAppDbController.users.createUser(username, password);
             const avatar = new DefaultProfileImage_1.DefaultProfileImage(username.charAt(0)); // svg content
-            const path = `media/${insertedUser.toString()}/avatar.svg`;
-            avatar.write(path);
-            // const metadata = {
-            //   uploaderId: insertedUser,
-            //   privacy: "public",
-            //   uploadTimestamp: new Date()
-            // }
-            // const mediaType = "image/svg"
-            // const mediaOId = await dc.media.saveMedia(path, mediaType, metadata)
+            const path = `media/${insertedUser.toString()}/public/avatar.svg`;
+            avatar.write('./' + path);
             await mongodb_1.chatAppDbController.users.updateUser(insertedUser.toString(), {
                 invitations: [mongodb_1.chatAppDbController.globalChatId],
                 avatar: path
@@ -66,7 +59,7 @@ router.post('/login', async (req, res) => {
         }
         const compResult = await bcrypt_1.default.compare(password, user.password);
         if (compResult) {
-            const access_token = (0, generateAuthToken_1.generateAuthToken)({ _id: user._id, role: 'owner' });
+            const access_token = (0, generateAuthToken_1.generateAuthToken)(user._id);
             return res.status(200).json({ access_token });
         }
         else {

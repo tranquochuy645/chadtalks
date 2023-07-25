@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const mongodb_1 = require("mongodb");
-const jwt_1 = require("../../middlewares/express/jwt");
-const mongodb_2 = require("../../controllers/mongodb");
+const jwt_1 = require("../../../middlewares/express/jwt");
+const mongodb_2 = require("../../../controllers/mongodb");
 const router = (0, express_1.Router)();
 // GET /api/v1/rooms/ 
 // This endpoint returns list of rooms'info that the user has access to

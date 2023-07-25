@@ -13,13 +13,6 @@ const dbOpts = {};
 mongodb_1.chatAppDbController.init(config_1.default.mongo_uri, config_1.default.db_name, dbOpts)
     .then(() => {
     // Only start server after db is initialized
-    // AWSControllerS3.init(
-    //     {
-    //         aws_region: conf.aws_region,
-    //         aws_accessKeyId: conf.aws_accessKeyId,
-    //         aws_secretAccessKey: conf.aws_secretAccessKey
-    //     }
-    // )
     const server = (0, http_1.createServer)(app_1.default);
     (0, socket_1.setupSocketIO)(server);
     server.listen(port);

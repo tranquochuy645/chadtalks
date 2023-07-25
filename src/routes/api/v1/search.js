@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const jwt_1 = require("../../middlewares/express/jwt");
-const mongodb_1 = require("../../controllers/mongodb");
+const jwt_1 = require("../../../middlewares/express/jwt");
+const mongodb_1 = require("../../../controllers/mongodb");
 const router = (0, express_1.Router)();
 router.get('/:query', jwt_1.verifyToken, async (req, res) => {
     try {
