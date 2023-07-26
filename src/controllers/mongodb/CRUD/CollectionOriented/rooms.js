@@ -55,21 +55,25 @@ class RoomsController extends generic_1.CollectionReference {
     }
     /**
      * Retrieve the participant lists for rooms matching the filter.
-     * @param filter - The filter criteria to find rooms.
+     * @param roomIds - An array of room IDs to retrieve information for.
      * @returns A Promise resolving to an array of room objects.
      * @throws Error if the room is not found or the user is not a member of the room.
      */
-    async getParticipantLists(filter) {
+    async getRoomsInfo(roomIds) {
         var _a;
         try {
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.find(filter, {
+            // Use the $in operator to find rooms with matching _id in the provided array of roomIds
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.find({ _id: { $in: roomIds } }, // Use $in operator to match any of the provided roomIds
+            {
                 projection: {
                     _id: 1,
-                    participants: 1
+                    participants: 1,
+                    isMeeting: 1,
+                    meeting_uuid: 1
                 }
             }).toArray());
-            if (!result) {
-                throw new Error("Room not found || Not a member of the room");
+            if (!result || result.length === 0) {
+                throw new Error("Room not found or user is not a member of the room");
             }
             return result;
         }
@@ -86,7 +90,7 @@ class RoomsController extends generic_1.CollectionReference {
      * @returns A Promise resolving to the room details object.
      * @throws Error if the room is not found or the user is not a member of the room.
      */
-    async getRoom(whoSearch, roomId, messagesLimit, skip) {
+    async getMessages(whoSearch, roomId, messagesLimit, skip) {
         var _a;
         try {
             const room = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({
@@ -95,13 +99,10 @@ class RoomsController extends generic_1.CollectionReference {
             }, {
                 projection: {
                     _id: 0,
-                    participants: 1,
                     messages: {
                         $slice: Number.isInteger(skip) ? [skip, messagesLimit] : -messagesLimit
                     },
-                    conversationLength: { $cond: { if: { $isArray: "$messages" }, then: { $size: "$messages" }, else: "NA" } },
-                    isMeeting: 1,
-                    meeting_uuid: 1
+                    conversationLength: { $cond: { if: { $isArray: "$messages" }, then: { $size: "$messages" }, else: "NA" } }
                 }
             }));
             if (!room) {
@@ -229,6 +230,36 @@ class RoomsController extends generic_1.CollectionReference {
         if (uuid)
             return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: true, meeting_uuid: uuid } });
         return (_b = this._collection) === null || _b === void 0 ? void 0 : _b.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: false, meeting_uuid: null } });
+    }
+    /**
+   * Check the meeting status and UUID for a room.
+   * @param roomId - The ID of the room.
+   * @returns A Promise resolving to an object containing meeting information.
+   *          If the room is not found, it will return null.
+   */
+    async checkMeeting(roomId) {
+        var _a;
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({ _id: new mongodb_1.ObjectId(roomId) }, {
+                projection: {
+                    _id: 0,
+                    isMeeting: 1,
+                    meeting_uuid: 1
+                }
+            }));
+            if (!result) {
+                // If the room is not found, return null
+                return null;
+            }
+            // Otherwise, return the meeting information
+            return {
+                isMeeting: !!result.isMeeting,
+                meeting_uuid: result.meeting_uuid || null
+            };
+        }
+        catch (err) {
+            throw err;
+        }
     }
     /**
    * Save a message in a room.

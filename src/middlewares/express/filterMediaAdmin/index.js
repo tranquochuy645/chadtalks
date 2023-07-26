@@ -23,12 +23,10 @@ const filterMediaAdmin = async (req, res, next) => {
         if (req.params.roomId === 'public') {
             return next();
         }
-        const data = await mongodb_2.chatAppDbController.users.getRooms(userId);
-        let { rooms } = data;
+        const rooms = await mongodb_2.chatAppDbController.users.getRoomsList(userId);
         if (!rooms || rooms.length == 0) {
             throw new Error("Not a member of the room");
         }
-        rooms = rooms.map((room) => room.toString());
         if (rooms.includes(req.params.roomId)) {
             return next();
         }

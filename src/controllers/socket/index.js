@@ -21,8 +21,11 @@ const setupSocketIO = (server) => {
         }
         let rooms;
         try {
-            const user = await mongodb_1.chatAppDbController.users.getRooms(userId);
-            rooms = user.rooms.map((room) => room.toString());
+            rooms = await mongodb_1.chatAppDbController.users.getRoomsList(userId) || [];
+            rooms = rooms.map(room => room.toString());
+            if (!rooms) {
+                throw new Error();
+            }
         }
         catch (e) {
             return socket.disconnect();
@@ -32,9 +35,8 @@ const setupSocketIO = (server) => {
         socket.emit("ok");
         console.log("A user connected");
         // Handle join meeting event
-        socket.on("join_meet", (initData) => {
+        socket.on("join_meet", async (initData) => {
             var _a;
-            console.log("A user has joined meeting");
             //initData: [ original chat room id , meeting uuid]
             if (!initData || initData.length != 2
                 || !initData[0] || !initData[1]
@@ -42,15 +44,17 @@ const setupSocketIO = (server) => {
                 return socket.disconnect();
             }
             socket.join(initData[1]);
+            console.log("A user has joined meeting");
             socket.on("disconnect", () => {
                 var _a, _b;
                 io.to(initData[1]).emit('off_peer', socket.id);
+                console.log("A user has left meeting");
                 //if there is still user in this meeting, return
                 console.log((_a = io.sockets.adapter.rooms.get(initData[1])) === null || _a === void 0 ? void 0 : _a.size);
                 if ((_b = io.sockets.adapter.rooms.get(initData[1])) === null || _b === void 0 ? void 0 : _b.size)
                     return;
                 //else if all users has left the meeting
-                io.to(initData[0]).emit("end_meet");
+                io.to(initData[0]).emit("end_meet", initData);
                 mongodb_1.chatAppDbController.rooms.setMeeting(initData[0]);
             });
             socket.on('offer', (msg) => {
@@ -69,19 +73,22 @@ const setupSocketIO = (server) => {
             // Announce that they have joined
             socket.to(initData[1]).emit('new_peer', socket.id);
             // Check if this is the first user in the meeting
-            if (((_a = io.sockets.adapter.rooms.get(initData[1])) === null || _a === void 0 ? void 0 : _a.size) == 1) {
-                //anounce the room
-                console.log("first user");
-                socket.to(initData[0]).emit("meet", [userId, initData[0], initData[1], new Date()]);
-                // Set isMeeting to true and save uuid in db
-                mongodb_1.chatAppDbController.rooms.setMeeting(initData[0], initData[1]);
+            if (((_a = io.sockets.adapter.rooms.get(initData[1])) === null || _a === void 0 ? void 0 : _a.size) === 1) {
+                const meetingState = await mongodb_1.chatAppDbController.rooms.checkMeeting(initData[0]);
+                if ((meetingState === null || meetingState === void 0 ? void 0 : meetingState.isMeeting) === false && (meetingState === null || meetingState === void 0 ? void 0 : meetingState.meeting_uuid) === null) {
+                    //This is the first user in the meeting
+                    //anounce the room
+                    socket.to(initData[0]).emit("meet", [userId, initData[0], initData[1], new Date()]);
+                    // Set isMeeting to true and save uuid in db
+                    mongodb_1.chatAppDbController.rooms.setMeeting(initData[0], initData[1]);
+                }
             }
         });
         // Handle join chat event
         socket.on('join_chat', async () => {
             var _a;
             console.log("A user has joined chat");
-            rooms && rooms.length > 0 && rooms.forEach((room) => {
+            rooms.length > 0 && rooms.forEach((room) => {
                 socket.join(room);
             });
             try {
@@ -99,14 +106,23 @@ const setupSocketIO = (server) => {
                     mongodb_1.chatAppDbController.rooms.saveMessage(userId, msg[0], msg[1], msg[2]);
                 });
                 // Handle call event
-                socket.on("meet", (msg) => {
+                socket.on("meet", async (msg) => {
                     //msg: [room id, date]
                     console.log("meet:", msg);
+                    const meetingState = await mongodb_1.chatAppDbController.rooms.checkMeeting(msg[0]);
+                    if ((meetingState === null || meetingState === void 0 ? void 0 : meetingState.isMeeting) && meetingState.meeting_uuid) {
+                        //Just tell the client to refresh because something went wrong
+                        //A meeting of that room is allready in progress
+                        return socket.emit("room");
+                    }
+                    //Init a new meeting
                     const meeting_uuid = (0, uuid_1.v4)();
+                    //Tell the client
                     socket.emit("meet", [userId, msg[0], meeting_uuid]);
                 });
                 socket.on("disconnect", async () => {
                     var _a;
+                    console.log("A user has left chat");
                     // If the user has other socket connected,return
                     if ((_a = io.sockets.adapter.rooms.get(userId)) === null || _a === void 0 ? void 0 : _a.size)
                         return;

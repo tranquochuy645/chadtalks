@@ -31,7 +31,7 @@ router.get('/:id', jwt_1.verifyToken, async (req, res) => {
     const skip = parseInt(req.query.skip, 10); // Parse the 'skip' parameter from the query string
     const limit = parseInt(req.query.limit, 10) || 30; // Parse the 'limit' parameter from the query string or set default to 30
     try {
-        const data = await mongodb_2.chatAppDbController.rooms.getRoom(req.headers.userId, req.params.id, limit, skip); // Pass the 'limit' and 'skip' parameters to the getRoom function
+        const data = await mongodb_2.chatAppDbController.rooms.getMessages(req.headers.userId, req.params.id, limit, skip); // Pass the 'limit' and 'skip' parameters to the getRoom function
         res.status(200).json(data);
     }
     catch (err) {

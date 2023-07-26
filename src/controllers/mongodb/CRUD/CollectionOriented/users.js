@@ -150,11 +150,20 @@ class UsersController extends generic_1.CollectionReference {
     /**
      * Get the rooms of a user.
      * @param id - The ID of the user.
-     * @returns A Promise resolving to the user's rooms object. { rooms: ObjectId[] }
+     * @returns A Promise resolving to the user's rooms oid array: ObjecId[]
      */
-    getRooms(id) {
+    async getRoomsList(id) {
         var _a;
-        return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({ _id: new mongodb_1.ObjectId(id) }, { projection: { _id: 0, rooms: 1 } });
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({ _id: new mongodb_1.ObjectId(id) }, { projection: { _id: 0, rooms: 1 } }));
+            if (!result) {
+                return [];
+            }
+            return result.rooms;
+        }
+        catch (err) {
+            throw err;
+        }
     }
     /**
      * Remove a room ID from the invitation list of a user.

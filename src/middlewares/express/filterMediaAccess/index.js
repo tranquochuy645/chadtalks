@@ -25,12 +25,10 @@ const filterMediaAccess = async (req, res, next) => {
     }
     try {
         const { userId } = (0, getTokenPayload_1.getTokenPayload)(req.query.token);
-        const data = await mongodb_2.chatAppDbController.users.getRooms(userId);
-        let { rooms } = data;
+        const rooms = await mongodb_2.chatAppDbController.users.getRoomsList(userId);
         if (!rooms || rooms.length == 0) {
             throw new Error("Not a member of the room");
         }
-        rooms = rooms.map((room) => room.toString());
         if (rooms.includes(req.params.roomId)) {
             return next();
         }
