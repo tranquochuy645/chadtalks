@@ -24,8 +24,8 @@ const filterMediaAccess = async (req, res, next) => {
         });
     }
     try {
-        const { userId } = (0, getTokenPayload_1.getTokenPayload)(req.query.token);
-        const rooms = await mongodb_2.chatAppDbController.users.getRoomsList(userId);
+        const { uid } = (0, getTokenPayload_1.getTokenPayload)(req.query.token);
+        const rooms = await mongodb_2.chatAppDbController.users.getRoomsList(uid);
         if (!rooms || rooms.length == 0) {
             throw new Error("Not a member of the room");
         }

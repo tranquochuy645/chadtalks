@@ -7,6 +7,7 @@ const conf = {
     mongo_uri: process.env.MONGO_URI || "",
     db_name: process.env.DB_NAME || "",
     port: process.env.PORT || "",
+    service_account_email: process.env.SERVICE_ACCOUNT_EMAIL || "",
 };
 // Validate if any child property is null or undefined
 for (const prop in conf) {

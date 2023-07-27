@@ -8,7 +8,7 @@ const config_1 = __importDefault(require("../../config"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const getTokenPayload = (token) => {
     const secretKey = config_1.default.jwt_key;
-    const { userId } = jsonwebtoken_1.default.verify(token, secretKey);
-    return { userId };
+    const payload = jsonwebtoken_1.default.verify(token, secretKey);
+    return payload;
 };
 exports.getTokenPayload = getTokenPayload;

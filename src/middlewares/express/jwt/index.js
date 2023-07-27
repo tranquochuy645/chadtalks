@@ -20,8 +20,8 @@ const verifyToken = (req, res, next) => {
     }
     ;
     try {
-        const { userId } = (0, getTokenPayload_1.getTokenPayload)(token);
-        req.headers.userId = userId;
+        const { uid } = (0, getTokenPayload_1.getTokenPayload)(token);
+        req.headers.userId = uid;
         next();
     }
     catch (error) {
