@@ -49,9 +49,6 @@ router.put('/', jwt_1.verifyToken, handleUpdatePassword_1.handleUpdatePassword, 
                 return res.status(403).json({ message: "Password mismatch" });
             }
         }
-        // if (updateData.avatar) {
-        //   FileWriter.write(`${req.headers.userId as string}/avatar`, updateData.avatar)
-        // }
         const result = await mongodb_1.chatAppDbController.users.updateUser(req.headers.userId, updateData);
         if (result) {
             return res.status(200).json({ message: 'User updated successfully' });

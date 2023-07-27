@@ -242,5 +242,103 @@ class UsersController extends generic_1.CollectionReference {
             throw e;
         }
     }
+    /**
+     * Extracts the list of rooms associated with a specific user, including information about the participants and meeting details.
+     * @param userId - The ID of the user for whom to retrieve the rooms.
+     * @returns A Promise resolving to an array of room objects with participant details and meeting information.
+     *          An empty array if no room, or can not find the user.
+     * @throws If any error occurs during the database query or data processing.
+     */
+    async extractRoomsList(userId) {
+        var _a, _b;
+        try {
+            // Use the MongoDB aggregation pipeline to efficiently retrieve the rooms list
+            const allRoomsOfUser = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.aggregate([
+                // Match the user with the specified ObjectId
+                {
+                    $match: { _id: new mongodb_1.ObjectId(userId) }
+                },
+                // Limit the result to one document, as we are interested in one user's data
+                {
+                    $limit: 1
+                },
+                // Project to keep only the "rooms" field from the user document
+                {
+                    $project: {
+                        _id: 0,
+                        rooms: 1
+                    }
+                },
+                // Perform a lookup to get all userRooms based on the "rooms" array
+                {
+                    $lookup: {
+                        from: "rooms",
+                        localField: "rooms",
+                        foreignField: "_id",
+                        as: "userRooms"
+                    }
+                },
+                // Project to exclude the "messages" field from the userRooms data, as it can be large
+                {
+                    $project: {
+                        "userRooms._id": 1,
+                        "userRooms.participants": 1,
+                        "userRooms.isMeeting": 1,
+                        "userRooms.meeting_uuid": 1,
+                        "userRooms.type": 1
+                    }
+                },
+                // Unwind the "userRooms" array to prepare for the next stage
+                {
+                    $unwind: "$userRooms"
+                },
+                // Perform another lookup to get information about participants in each room
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "userRooms.participants",
+                        foreignField: "_id",
+                        as: "userRooms.participantsInfo"
+                    }
+                },
+                // Project to shape the "participantsInfo" field within the "rooms" array
+                {
+                    $project: {
+                        "userRooms._id": 1,
+                        "userRooms.participantsInfo": {
+                            _id: 1,
+                            fullname: 1,
+                            avatar: 1,
+                            isOnline: 1,
+                            bio: 1
+                        },
+                        "userRooms.isMeeting": 1,
+                        "userRooms.meeting_uuid": 1,
+                        "userRooms.type": 1
+                    }
+                },
+                // Group the documents back to the original structure using $group
+                {
+                    $group: {
+                        _id: "$_id",
+                        rooms: {
+                            $push: {
+                                _id: "$userRooms._id",
+                                participants: "$userRooms.participantsInfo",
+                                isMeeting: "$userRooms.isMeeting",
+                                meeting_uuid: "$userRooms.meeting_uuid",
+                                type: "$userRooms.type"
+                            }
+                        }
+                    }
+                }
+            ]).toArray());
+            // Return the rooms array of the first document (user) in the result
+            return ((_b = allRoomsOfUser[0]) === null || _b === void 0 ? void 0 : _b.rooms) || [];
+        }
+        catch (e) {
+            throw e;
+        }
+    }
 }
 exports.default = UsersController;

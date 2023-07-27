@@ -10,7 +10,7 @@ const router = (0, express_1.Router)();
 router.get('/', jwt_1.verifyToken, async (req, res) => {
     try {
         const userId = req.headers.userId;
-        const roomsInfo = await mongodb_2.chatAppDbController.roomsExtractor.exec(userId);
+        const roomsInfo = await mongodb_2.chatAppDbController.users.extractRoomsList(userId);
         if (!roomsInfo) {
             return res.status(404).json({ message: "User not found" });
         }

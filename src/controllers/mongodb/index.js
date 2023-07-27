@@ -6,10 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.chatAppDbController = void 0;
 const Setup_1 = __importDefault(require("./Setup"));
 const Connection_1 = __importDefault(require("./Connection"));
-const users_1 = __importDefault(require("./CRUD/CollectionOriented/users"));
-const rooms_1 = __importDefault(require("./CRUD/CollectionOriented/rooms"));
-const media_1 = __importDefault(require("./CRUD/CollectionOriented/media"));
-const roomsExtractor_1 = __importDefault(require("./CRUD/Combined/roomsExtractor"));
+const users_1 = __importDefault(require("./CRUD/users"));
+const rooms_1 = __importDefault(require("./CRUD/rooms"));
+const media_1 = __importDefault(require("./CRUD/media"));
 const Watcher_1 = __importDefault(require("./Watcher"));
 /**
  * DatabaseController class for managing database setup and providing access to collections.
@@ -42,7 +41,6 @@ class DatabaseController extends Setup_1.default {
         this._users = new users_1.default(this.db.collection("users"));
         this._rooms = new rooms_1.default(this.db.collection("rooms"));
         this._media = new media_1.default(this.db.collection("media"));
-        this._roomsExtractor = new roomsExtractor_1.default(this._users, this._rooms);
     }
     /**
      * Create a change watcher for a MongoDB collection.
@@ -83,16 +81,6 @@ class DatabaseController extends Setup_1.default {
         if (!this._media)
             throw new Error("MEDIA NOT INITIALIZED");
         return this._media;
-    }
-    /**
-     * Get the RoomsExtractor instance for extracting rooms data based on user ID.
-     * @throws Error if the RoomsExtractor instance is not initialized.
-     * @returns The RoomsExtractor instance.
-     */
-    get roomsExtractor() {
-        if (!this._roomsExtractor)
-            throw new Error("RoomsExtractor NOT INITIALIZED");
-        return this._roomsExtractor;
     }
 }
 DatabaseController._collectionNames = ["users", "rooms", "media"];
