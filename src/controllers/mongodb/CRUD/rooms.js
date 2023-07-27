@@ -269,13 +269,14 @@ class RoomsController extends generic_1.CollectionReference {
    * @param timestamp - The timestamp of the message.
    * @throws Error if there's an issue while saving the message.
    */
-    async saveMessage(sender, roomId, content, timestamp) {
+    async saveMessage(sender, roomId, content, timestamp, urls) {
         var _a;
         try {
             const data = {
                 sender: new mongodb_1.ObjectId(sender),
                 content,
-                timestamp
+                timestamp,
+                urls
             };
             const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $push: { messages: data } }));
             console.log("Saved message: " + (result === null || result === void 0 ? void 0 : result.modifiedCount));

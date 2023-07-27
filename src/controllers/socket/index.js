@@ -100,10 +100,10 @@ const setupSocketIO = (server) => {
                 }
                 // Handle message event
                 socket.on("msg", (msg) => {
-                    //msg: [room id, content, date]
+                    //msg: [room id, content, date, [urls] ]
                     console.log("msg:", msg);
-                    io.to(msg[0]).emit("msg", [userId, msg[0], msg[1], msg[2]]);
-                    mongodb_1.chatAppDbController.rooms.saveMessage(userId, msg[0], msg[1], msg[2]);
+                    io.to(msg[0]).emit("msg", [userId, msg[0], msg[1], msg[2]], msg[3]);
+                    mongodb_1.chatAppDbController.rooms.saveMessage(userId, msg[0], msg[1], msg[2], msg[3]);
                 });
                 // Handle call event
                 socket.on("meet", async (msg) => {

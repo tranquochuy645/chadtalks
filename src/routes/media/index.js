@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const multer_1 = require("multer");
 const filterMediaAccess_1 = require("../../middlewares/express/filterMediaAccess");
 const filterMediaAdmin_1 = require("../../middlewares/express/filterMediaAdmin");
 const multerUpload_1 = require("../../middlewares/express/multerUpload");
@@ -29,23 +28,42 @@ router.get('/:userId/:roomId/:filename', filterMediaAccess_1.filterMediaAccess, 
 router.get('/*', (req, res) => {
     res.status(404).json({ message: "Media file not found" });
 });
-// POST /media/upload
-// This endpoint handles file uploads
-router.post('/:userId/:roomId', filterMediaAdmin_1.filterMediaAdmin, multerUpload_1.multerUpload, async (req, res) => {
+// POST /media/:userId/:roomId
+router.post('/:userId/:roomId', filterMediaAdmin_1.filterMediaAdmin, (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded' });
+        const count = Number(req.query.count);
+        if (count === 1) {
+            (0, multerUpload_1.multerUpload)(req, res, (error) => {
+                if (error) {
+                    return res.status(400).json({ message: 'Error uploading the file.', error: error.message });
+                }
+                if (!req.file) {
+                    throw new Error("Missing file path");
+                }
+                // File uploaded successfully
+                res.status(200).json({ message: 'File uploaded successfully', urls: [req.file.path] });
+            });
         }
-        // Check for any errors during file upload
-        if (req.file instanceof multer_1.MulterError) {
-            return res.status(400).json({ message: 'File upload error', error: req.file.message });
+        else if (count > 1) {
+            (0, multerUpload_1.multerUploadMany)(req, res, (error) => {
+                if (error) {
+                    return res.status(400).json({ message: 'Error uploading files.', error: error.message });
+                }
+                const fileUrls = Array.isArray(req.files) && req.files.map((file) => file.path);
+                if (!fileUrls) {
+                    throw new Error("Missing files path");
+                }
+                // Files uploaded successfully
+                res.status(200).json({ message: 'Files uploaded successfully', urls: fileUrls });
+            });
         }
-        // Process the uploaded file using FileWriter or save it to a database
-        // Respond with success message
-        res.status(200).json({ message: 'File uploaded successfully', url: req.file.path });
+        else {
+            // Invalid 'count' value
+            res.status(400).json({ message: 'Invalid "count" value. It should be a positive integer.' });
+        }
     }
     catch (error) {
-        console.error('Error uploading file:', error);
+        console.error('Error uploading file(s):', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });

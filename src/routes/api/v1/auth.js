@@ -59,7 +59,7 @@ router.post('/login', async (req, res) => {
         }
         const compResult = await bcrypt_1.default.compare(password, user.password);
         if (compResult) {
-            const access_token = (0, generateAuthToken_1.generateAuthToken_v2)(user._id);
+            const access_token = (0, generateAuthToken_1.generateAuthToken)(user._id);
             return res.status(200).json({ access_token });
         }
         else {
