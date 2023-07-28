@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+// Import route handlers for different API endpoints
 const auth_1 = __importDefault(require("./auth"));
 const rooms_1 = __importDefault(require("./rooms"));
 const users_1 = __importDefault(require("./users"));
@@ -19,11 +20,15 @@ const generalLimiter = (0, express_rate_limit_1.default)({
 // Create a rate limiter middleware specifically for the /auth route
 const authLimiter = (0, express_rate_limit_1.default)({
     windowMs: 60 * 5000,
-    max: 30,
+    max: 500,
     message: 'Too many requests for authentication from this IP, please try again later.',
 });
+// Mount the authentication routes under the path '/auth' with rate limiting
 router.use('/auth', authLimiter, auth_1.default);
+// Mount the rooms routes under the path '/rooms' with general rate limiting
 router.use('/rooms', generalLimiter, rooms_1.default);
+// Mount the users routes under the path '/users' with general rate limiting
 router.use('/users', generalLimiter, users_1.default);
+// Mount the search routes under the path '/search' with general rate limiting
 router.use('/search', generalLimiter, search_1.default);
 exports.default = router;

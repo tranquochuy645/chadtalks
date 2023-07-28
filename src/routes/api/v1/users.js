@@ -10,7 +10,14 @@ const mongodb_2 = require("mongodb");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const handleUpdatePassword_1 = require("../../../middlewares/express/handleUpdatePassword");
 const router = (0, express_1.Router)();
-// GET /api/v1/users
+/**
+ * Route to get the user's own profile information.
+ * @route GET /api/v1/users
+ * @middleware verifyToken - Middleware to verify the user's access token.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Promise<Object>} - A Promise that resolves to the user's profile information.
+ */
 router.get('/', jwt_1.verifyToken, async (req, res) => {
     try {
         const data = await mongodb_1.chatAppDbController.users.readProfile(req.headers.userId);
@@ -20,12 +27,17 @@ router.get('/', jwt_1.verifyToken, async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-// GET /api/v1/users/:id
+/**
+ * Route to get the short profile information of a specific user.
+ * @route GET /api/v1/users/:id
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Promise<Object>} - A Promise that resolves to the short profile information of the requested user.
+ */
 router.get('/:id', async (req, res) => {
     try {
         if (!mongodb_2.ObjectId.isValid(req.params.id)) {
-            return res.status(400)
-                .json({ message: "ID passed in must be a string of 12 bytes or a string of 24 hex characters or an integer" });
+            return res.status(400).json({ message: "ID passed in must be a string of 12 bytes or a string of 24 hex characters or an integer" });
         }
         const data = await mongodb_1.chatAppDbController.users.readShortProfile(req.params.id);
         res.status(200).json(data);
@@ -34,7 +46,15 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-// PUT /api/v1/users/
+/**
+ * Route to update user profile information.
+ * @route PUT /api/v1/users/
+ * @middleware verifyToken - Middleware to verify the user's access token.
+ * @middleware handleUpdatePassword - Middleware for handling password updates securely.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Promise<Object>} - A Promise that resolves to a response object with a success message or an error message.
+ */
 router.put('/', jwt_1.verifyToken, handleUpdatePassword_1.handleUpdatePassword, async (req, res) => {
     try {
         // Extract the update data from req.body
@@ -59,7 +79,14 @@ router.put('/', jwt_1.verifyToken, handleUpdatePassword_1.handleUpdatePassword, 
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-// DELETE /api/v1/users/:id
+/**
+ * Route to delete a user account.
+ * @route DELETE /api/v1/users/:id
+ * @middleware verifyToken - Middleware to verify the user's access token.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Promise<Object>} - A Promise that resolves to a response object with a success message or an error message.
+ */
 router.delete('/', jwt_1.verifyToken, async (req, res) => {
     try {
         const userId = req.headers.userId;

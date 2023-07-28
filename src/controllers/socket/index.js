@@ -172,26 +172,59 @@ class SocketIOController {
         dc.watch("users", invitations_update_pipeline, handleChange);
         this._io = io;
     }
+    /**
+     * Add a user to a specified room by joining all their sockets to the room.
+     *
+     * @param {string} userId - The user ID of the user to be added to the room.
+     * @param {string} roomId - The room ID of the room to which the user should be added.
+     *
+     * @example
+     * // Add a user to a room
+     * const userId = 'user123';
+     * const roomId = 'room456';
+     *
+     * // Call the addToRoom() method to add the user with ID 'user123' to the room with ID 'room456'
+     * ioController.addToRoom(userId, roomId);
+     *
+     * // Now, all sockets of the user 'user123' are joined to the room 'room456',
+     * // and the user will receive events and messages related to that room.
+     */
     addToRoom(userId, roomId) {
         var _a;
-        (_a = this._io.sockets.adapter.rooms.get(userId)) === null || _a === void 0 ? void 0 : _a.forEach(
-        // get all the socket ids of that user
-        (socketId) => {
+        // Get all the socket IDs of the user with the given userId
+        (_a = this._io.sockets.adapter.rooms.get(userId)) === null || _a === void 0 ? void 0 : _a.forEach((socketId) => {
             var _a;
-            //join those sockets to the room
+            // For each socket of the user, join them to the specified room
             (_a = this._io.sockets.sockets.get(socketId)) === null || _a === void 0 ? void 0 : _a.join(roomId);
         });
     }
+    /**
+     * Remove a user from a specified room by having all their sockets leave the room.
+     *
+     * @param {string} userId - The user ID of the user to be removed from the room.
+     * @param {string} roomId - The room ID of the room from which the user should be removed.
+     *
+     * @example
+     * // Remove a user from a room
+     * const userId = 'user123';
+     * const roomId = 'room456';
+     *
+     * // Call the removeFromRoom() method to remove the user with ID 'user123' from the room with ID 'room456'
+     * ioController.removeFromRoom(userId, roomId);
+     *
+     * // Now, all sockets of the user 'user123' have left the room 'room456',
+     * // and the user will no longer receive events and messages related to that room.
+     */
     removeFromRoom(userId, roomId) {
         var _a;
-        (_a = this._io.sockets.adapter.rooms.get(userId)) === null || _a === void 0 ? void 0 : _a.forEach(
-        // get all the socket ids of that user
-        (socketId) => {
+        // Get all the socket IDs of the user with the given userId
+        (_a = this._io.sockets.adapter.rooms.get(userId)) === null || _a === void 0 ? void 0 : _a.forEach((socketId) => {
             var _a;
-            //join those sockets to the room
+            // For each socket of the user, make them leave the specified room
             (_a = this._io.sockets.sockets.get(socketId)) === null || _a === void 0 ? void 0 : _a.leave(roomId);
         });
     }
+    // Allow direct access to the io instance
     get io() {
         if (this._io)
             return this._io;

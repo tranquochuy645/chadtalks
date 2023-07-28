@@ -9,7 +9,8 @@ const stream_1 = require("stream");
 const fs_1 = require("fs");
 const router = (0, express_1.Router)();
 // GET /media/:userId/:roomId/:filename?token=<token>
-router.get('/:userId/:roomId/:filename', filterMediaAccess_1.filterMediaAccess, (req, res) => {
+router.get('/:userId/:roomId/:filename', filterMediaAccess_1.filterMediaAccess, // Middleware to check access to the media
+(req, res) => {
     // Ensure that the filename is properly sanitized to prevent directory traversal attacks
     // Remove any ".." to prevent traversal
     const filename = req.params.filename.replace(/\.\.\//g, '');
@@ -24,11 +25,9 @@ router.get('/:userId/:roomId/:filename', filterMediaAccess_1.filterMediaAccess, 
     });
     ps.pipe(res);
 });
-router.get('/*', (req, res) => {
-    res.status(404).send("Media file not found");
-});
 // POST /media/:userId/:roomId
-router.post('/:userId/:roomId', filterMediaAdmin_1.filterMediaAdmin, (req, res) => {
+router.post('/:userId/:roomId', filterMediaAdmin_1.filterMediaAdmin, // Middleware to check if user has admin access
+(req, res) => {
     try {
         const count = Number(req.query.count);
         if (count === 1) {
@@ -65,5 +64,9 @@ router.post('/:userId/:roomId', filterMediaAdmin_1.filterMediaAdmin, (req, res) 
         console.error('Error uploading file(s):', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
+});
+// Route to handle all other all requests to /media/* (if doesnt match all routes above)
+router.all('/*', (req, res) => {
+    res.status(404).send("Media file not found");
 });
 exports.default = router;

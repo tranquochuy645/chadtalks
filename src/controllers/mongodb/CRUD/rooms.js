@@ -20,6 +20,7 @@ class Room {
             throw new Error("Invalid value for 'type' field. It should be 'global' or 'default'.");
         }
         this.type = type;
+        this.admin = new mongodb_1.ObjectId(creator);
         this.invited = invited.map(id => {
             if (!mongodb_1.ObjectId.isValid(id))
                 throw new Error("Invalid invited id");
@@ -59,11 +60,11 @@ class RoomsController extends generic_1.CollectionReference {
      * @returns A Promise resolving to an array of room objects.
      * @throws Error if the room is not found or the user is not a member of the room.
      */
-    async getRoomsInfo(roomIds) {
+    async getRoomsInfo(roomOIds) {
         var _a;
         try {
             // Use the $in operator to find rooms with matching _id in the provided array of roomIds
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.find({ _id: { $in: roomIds } }, // Use $in operator to match any of the provided roomIds
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.find({ _id: { $in: roomOIds } }, // Use $in operator to match any of the provided roomIds
             {
                 projection: {
                     _id: 1,
@@ -283,6 +284,62 @@ class RoomsController extends generic_1.CollectionReference {
         }
         catch (e) {
             console.error("Error saving message: " + e);
+        }
+    }
+    /**
+     * Delete a room.
+     * @param roomId - The ID of the room to delete.
+     * @param whoAsked - The ID of the user requesting the deletion.
+     * @returns A Promise resolving to an HTTP status code indicating the result of the deletion:
+     *          - 200 if the room is deleted successfully.
+     *          - 403 if the user is not the admin of the room.
+     *          - 404 if the room is not found.
+     * @throws Error if there's an issue with the deletion process.
+     */
+    async deleteRoom(roomId, whoAsked) {
+        var _a, _b, _c;
+        try {
+            const room = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({ _id: new mongodb_1.ObjectId(roomId) }));
+            if (!room) {
+                return 404; // Room not found
+            }
+            // Check if the user requesting deletion is the admin of the room
+            if (!((_b = room.admin) === null || _b === void 0 ? void 0 : _b.equals(new mongodb_1.ObjectId(whoAsked)))) {
+                return 403; // User is not the admin of the room
+            }
+            // Delete the room
+            const result = await ((_c = this._collection) === null || _c === void 0 ? void 0 : _c.deleteOne({ _id: new mongodb_1.ObjectId(roomId) }));
+            // Check if the deletion was successful
+            if ((result === null || result === void 0 ? void 0 : result.deletedCount) === 1) {
+                return 200; // Room deleted successfully
+            }
+            throw new Error("Failed to delete the room");
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+    /**
+   * Remove a participant from a room.
+   * @param participantId - The ID of the participant to remove.
+   * @param roomId - The ID of the room.
+   * @returns A Promise resolving to the count of modified documents.
+   */
+    async removeParticipant(participantId, roomId) {
+        var _a;
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
+                _id: new mongodb_1.ObjectId(roomId),
+                participants: new mongodb_1.ObjectId(participantId)
+            }, {
+                $pull: {
+                    participants: new mongodb_1.ObjectId(participantId)
+                }
+            }));
+            return result === null || result === void 0 ? void 0 : result.modifiedCount;
+        }
+        catch (err) {
+            throw err;
         }
     }
 }
