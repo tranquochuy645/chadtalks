@@ -4,6 +4,7 @@ const express_1 = require("express");
 const mongodb_1 = require("mongodb");
 const jwt_1 = require("../../../middlewares/express/jwt");
 const mongodb_2 = require("../../../controllers/mongodb");
+const socket_1 = require("../../../controllers/socket");
 const router = (0, express_1.Router)();
 // GET /api/v1/rooms/ 
 // This endpoint returns list of rooms'info that the user has access to
@@ -48,7 +49,6 @@ router.post('/', jwt_1.verifyToken, async (req, res) => {
         if (!mongodb_1.ObjectId.isValid(creator_userId)) {
             throw new Error("Invalid id");
         }
-        const creator_userOId = new mongodb_1.ObjectId(creator_userId);
         const oIdList = req.body.invited.map((id) => {
             if (mongodb_1.ObjectId.isValid(id)) {
                 return new mongodb_1.ObjectId(id);
@@ -65,8 +65,14 @@ router.post('/', jwt_1.verifyToken, async (req, res) => {
             throw new Error("Error updating creator rooms list");
         }
         // return modified count
-        const updateUsersInvitationList = await mongodb_2.chatAppDbController.users.updateMany({ _id: { $in: oIdList } }, { $push: { invitations: insertedRoom } });
+        const updateUsersInvitationList = await mongodb_2.chatAppDbController.users.updateMany({ _id: { $in: oIdList } }, { $addToSet: { invitations: insertedRoom } });
         if (updateUsersInvitationList == oIdList.length) {
+            //add this first user to socket io room
+            socket_1.ioController.addToRoom(creator_userId, insertedRoom.toString());
+            // signal this user to refresh rooms list
+            // this is not really necessary because we will send a http response 200, too
+            // the frontend should only refresh rooms list on the socket io signal
+            socket_1.ioController.io.to(creator_userId).emit('room');
             return res.status(200).json({ message: "Created Room Successfully" });
         }
         res.status(500).json({ message: 'Internal Server Error' });
@@ -85,7 +91,7 @@ router.put('/:id', jwt_1.verifyToken, async (req, res) => {
             message: "ID passed in must be a string of 12 bytes or a string of 24 hex characters or an integer",
         });
     try {
-        if (req.body.accept == true) {
+        if (req.body.accept === true) {
             const joinOk = await mongodb_2.chatAppDbController.users.joinRoom(req.headers.userId, req.params.id);
             if (!joinOk) {
                 throw new Error("Couldn't add to rooms list");
@@ -94,6 +100,10 @@ router.put('/:id', jwt_1.verifyToken, async (req, res) => {
             if (!addOk) {
                 throw new Error("Couldn't add to participants list");
             }
+            //add this first user to socket io room
+            socket_1.ioController.addToRoom(req.headers.userId, req.params.id);
+            // signal this user to refresh rooms list
+            socket_1.ioController.io.to(req.headers.userId).emit('room');
         }
         else {
             const roomPullCount = await mongodb_2.chatAppDbController.rooms.pullFromInvitedList(req.headers.userId, req.params.id);
@@ -110,6 +120,7 @@ router.put('/:id', jwt_1.verifyToken, async (req, res) => {
         res.status(200).json({ message: "ok" });
     }
     catch (err) {
+        console.error(err);
         res.status(500).json({ message: err.message });
     }
 });

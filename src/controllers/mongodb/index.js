@@ -84,6 +84,7 @@ class DatabaseController extends Setup_1.default {
     }
 }
 DatabaseController._collectionNames = ["users", "rooms", "media"];
+// Object.freeze(DatabaseController);
 const chatAppDbController = DatabaseController.getInstance();
 exports.chatAppDbController = chatAppDbController;
 exports.default = DatabaseController;

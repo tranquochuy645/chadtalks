@@ -120,13 +120,13 @@ class RoomsController extends generic_1.CollectionReference {
      * @param roomId - The ID of the room.
      * @returns A Promise resolving to the count of modified documents.
      */
-    async pushToInvitedList(userId, roomId) {
+    async addToInvitedList(userId, roomId) {
         var _a;
         try {
             const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
                 _id: new mongodb_1.ObjectId(roomId)
             }, {
-                $push: {
+                $addToSet: {
                     invited: new mongodb_1.ObjectId(userId)
                 }
             }));
@@ -170,7 +170,7 @@ class RoomsController extends generic_1.CollectionReference {
             const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
                 _id: new mongodb_1.ObjectId(roomId)
             }, {
-                $push: { participants: new mongodb_1.ObjectId(whoAsked) },
+                $addToSet: { participants: new mongodb_1.ObjectId(whoAsked) },
                 $pull: { invited: new mongodb_1.ObjectId(whoAsked) }
             }));
             return result === null || result === void 0 ? void 0 : result.modifiedCount;

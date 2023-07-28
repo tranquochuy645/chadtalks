@@ -30,7 +30,7 @@ router.post('/register', handleRegPassword_1.handleRegPassword, async (req, res)
                 invitations: [mongodb_1.chatAppDbController.globalChatId],
                 avatar: path
             });
-            await mongodb_1.chatAppDbController.rooms.pushToInvitedList(insertedUser.toString(), mongodb_1.chatAppDbController.globalChatId.toString());
+            await mongodb_1.chatAppDbController.rooms.addToInvitedList(insertedUser.toString(), mongodb_1.chatAppDbController.globalChatId.toString());
             return res.status(200).json({ message: 'Created account successfully' });
         }
         return res.status(409).json({ message: 'Username already exists' });

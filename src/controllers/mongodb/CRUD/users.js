@@ -184,6 +184,23 @@ class UsersController extends generic_1.CollectionReference {
         }
     }
     /**
+     * Invite a user to a room.
+     * @param userId - The ID of the user to invite.
+     * @param roomId - The ID of the room to invite the user to.
+     * @returns A Promise resolving to the count of modified documents (1 if the invitation was successful, 0 otherwise).
+     * @throws If any error occurs during the database query or data processing.
+     */
+    async inviteToRoom(userId, roomId) {
+        var _a;
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(userId) }, { $addToSet: { invitations: new mongodb_1.ObjectId(roomId) } }));
+            return result === null || result === void 0 ? void 0 : result.modifiedCount;
+        }
+        catch (e) {
+            throw e;
+        }
+    }
+    /**
      * Add a room ID to the rooms list of a user and remove it from the invitation list.
      * @param userId - The ID of the user.
      * @param roomId - The ID of the room to join.
@@ -193,7 +210,7 @@ class UsersController extends generic_1.CollectionReference {
         var _a;
         try {
             const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(userId) }, {
-                $push: { rooms: new mongodb_1.ObjectId(roomId) },
+                $addToSet: { rooms: new mongodb_1.ObjectId(roomId) },
                 $pull: { invitations: new mongodb_1.ObjectId(roomId) }
             }));
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
