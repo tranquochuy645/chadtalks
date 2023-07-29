@@ -67,6 +67,7 @@ router.get('/:id', jwt_1.verifyToken, async (req, res) => {
         }
         // Respond with a 200 status and the retrieved room messages.
         res.status(200).json(data);
+        mongodb_2.chatAppDbController.rooms.updateReadCursor(req.params.id, req.headers.userId, new Date());
     }
     catch (err) {
         console.error(err);
@@ -166,15 +167,15 @@ router.put('/:id', jwt_1.verifyToken, async (req, res) => {
         // Get the action requested by the user from the request body.
         switch (req.body.action) {
             case 'join':
+                // Add the user to the room's participants list using the 'dc.rooms.addParticipant' method.
+                const addOk = await mongodb_2.chatAppDbController.rooms.addParticipant(req.headers.userId, req.params.id);
+                if (!addOk) {
+                    return res.status(403).json({ message: "Not invited" });
+                }
                 // Add the user to the room's participants list.
                 const joinOk = await mongodb_2.chatAppDbController.users.joinRoom(req.headers.userId, req.params.id);
                 if (!joinOk) {
                     throw new Error("Couldn't add to rooms list");
-                }
-                // Add the user to the room's participants list using the 'dc.rooms.addParticipant' method.
-                const addOk = await mongodb_2.chatAppDbController.rooms.addParticipant(req.headers.userId, req.params.id);
-                if (!addOk) {
-                    throw new Error("Couldn't add to participants list");
                 }
                 // Add the user to the socket.io room for the room.
                 socket_1.ioController.addToRoom(req.headers.userId, req.params.id);

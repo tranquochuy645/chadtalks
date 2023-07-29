@@ -2,6 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongodb_1 = require("mongodb");
 const generic_1 = require("./generic");
+class ReadCursor {
+    constructor(id, date) {
+        this._id = new mongodb_1.ObjectId(id);
+        this.lastReadTimestamp = date || null;
+    }
+}
 /**
 * Room class representing a room object.
 */
@@ -28,6 +34,7 @@ class Room {
         });
         this.participants = [new mongodb_1.ObjectId(creator)];
         this.messages = [];
+        this.readCursors = [new ReadCursor(creator)];
         this.isMeeting = false; // Set the default value for isMeeting
         this.meeting_uuid = null; // Set the default value for meeting_uuid
     }
@@ -51,7 +58,8 @@ class RoomsController extends generic_1.CollectionReference {
             throw new Error("Room insertion failed.");
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in createRoom: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -79,7 +87,8 @@ class RoomsController extends generic_1.CollectionReference {
             return result;
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in getRoomsInfo: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -112,7 +121,8 @@ class RoomsController extends generic_1.CollectionReference {
             return room;
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in getMessages: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -134,7 +144,8 @@ class RoomsController extends generic_1.CollectionReference {
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in addToInvitedList: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -156,7 +167,8 @@ class RoomsController extends generic_1.CollectionReference {
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in pullFromInvitedList: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -169,15 +181,17 @@ class RoomsController extends generic_1.CollectionReference {
         var _a;
         try {
             const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
-                _id: new mongodb_1.ObjectId(roomId)
+                _id: new mongodb_1.ObjectId(roomId),
+                invited: { $elemMatch: { $eq: new mongodb_1.ObjectId(whoAsked) } }
             }, {
-                $addToSet: { participants: new mongodb_1.ObjectId(whoAsked) },
+                $addToSet: { participants: new mongodb_1.ObjectId(whoAsked), readCursors: new ReadCursor(whoAsked) },
                 $pull: { invited: new mongodb_1.ObjectId(whoAsked) }
             }));
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in addParticipant: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -198,6 +212,7 @@ class RoomsController extends generic_1.CollectionReference {
             // Update operation to remove the user from participants and invited arrays
             const update = {
                 $pull: {
+                    readCursors: { $elematch: { _id: new mongodb_1.ObjectId(userId) } },
                     participants: new mongodb_1.ObjectId(userId),
                     invited: new mongodb_1.ObjectId(userId),
                 },
@@ -215,7 +230,8 @@ class RoomsController extends generic_1.CollectionReference {
             return modifiedCount;
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in removeUserFromAllRooms: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -259,7 +275,8 @@ class RoomsController extends generic_1.CollectionReference {
             };
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in checkMeeting: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -316,7 +333,8 @@ class RoomsController extends generic_1.CollectionReference {
             throw new Error("Failed to delete the room");
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in deleteRoom: ${err.message}`);
+            throw errStacked;
         }
     }
     /**
@@ -330,16 +348,41 @@ class RoomsController extends generic_1.CollectionReference {
         try {
             const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
                 _id: new mongodb_1.ObjectId(roomId),
-                participants: new mongodb_1.ObjectId(participantId)
+                participants: { $elemMatch: { $eq: new mongodb_1.ObjectId(participantId) } }
             }, {
                 $pull: {
+                    readCursors: { _id: new mongodb_1.ObjectId(participantId) },
                     participants: new mongodb_1.ObjectId(participantId)
                 }
             }));
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
         }
         catch (err) {
-            throw err;
+            const errStacked = new Error(`Error in removeParticipant: ${err.message}`);
+            throw errStacked;
+        }
+    }
+    /**
+   * Update the read cursor for a user in a room.
+   * @param roomId - The ID of the room.
+   * @param userId - The ID of the user whose read cursor will be updated.
+   * @param lastReadTimestamp - The new last read timestamp for the user.
+   * @returns A Promise resolving to the count of modified documents (1 if successful, 0 otherwise).
+   */
+    async updateReadCursor(roomId, userId, lastReadTimestamp) {
+        var _a;
+        try {
+            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
+                _id: new mongodb_1.ObjectId(roomId),
+                "readCursors._id": new mongodb_1.ObjectId(userId)
+            }, {
+                $set: { "readCursors.$.lastReadTimestamp": lastReadTimestamp }
+            }));
+            return (result === null || result === void 0 ? void 0 : result.modifiedCount) || 0;
+        }
+        catch (err) {
+            const errStacked = new Error(`Error in updateReadCursor: ${err.message}`);
+            throw errStacked;
         }
     }
 }

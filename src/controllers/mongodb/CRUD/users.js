@@ -330,16 +330,6 @@ class UsersController extends generic_1.CollectionReference {
                         as: "userRooms"
                     }
                 },
-                // Project to exclude the "messages" field from the userRooms data, as it can be large
-                {
-                    $project: {
-                        "userRooms._id": 1,
-                        "userRooms.participants": 1,
-                        "userRooms.isMeeting": 1,
-                        "userRooms.meeting_uuid": 1,
-                        "userRooms.type": 1
-                    }
-                },
                 // Unwind the "userRooms" array to prepare for the next stage
                 {
                     $unwind: "$userRooms"
@@ -366,7 +356,9 @@ class UsersController extends generic_1.CollectionReference {
                         },
                         "userRooms.isMeeting": 1,
                         "userRooms.meeting_uuid": 1,
-                        "userRooms.type": 1
+                        "userRooms.type": 1,
+                        "userRooms.readCursors": 1,
+                        "userRooms.latestMessage": { $lastN: { n: 1, input: "$userRooms.messages" } } // last message
                     }
                 },
                 // Group the documents back to the original structure using $group
@@ -379,7 +371,9 @@ class UsersController extends generic_1.CollectionReference {
                                 participants: "$userRooms.participantsInfo",
                                 isMeeting: "$userRooms.isMeeting",
                                 meeting_uuid: "$userRooms.meeting_uuid",
-                                type: "$userRooms.type"
+                                type: "$userRooms.type",
+                                readCursors: "$userRooms.readCursors",
+                                latestMessage: "$userRooms.latestMessage"
                             }
                         }
                     }
