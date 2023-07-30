@@ -5,7 +5,7 @@ const generic_1 = require("./generic");
 class ReadCursor {
     constructor(id, date) {
         this._id = new mongodb_1.ObjectId(id);
-        this.lastReadTimestamp = date || null;
+        this.lastReadTimeStamp = date || null;
     }
 }
 /**
@@ -100,7 +100,7 @@ class RoomsController extends generic_1.CollectionReference {
      * @returns A Promise resolving to the room details object.
      * @throws Error if the room is not found or the user is not a member of the room.
      */
-    async getMessages(whoSearch, roomId, messagesLimit, skip) {
+    async getConversationData(whoSearch, roomId, messagesLimit, skip) {
         var _a;
         try {
             const room = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({
@@ -112,12 +112,10 @@ class RoomsController extends generic_1.CollectionReference {
                     messages: {
                         $slice: Number.isInteger(skip) ? [skip, messagesLimit] : -messagesLimit
                     },
-                    conversationLength: { $cond: { if: { $isArray: "$messages" }, then: { $size: "$messages" }, else: "NA" } }
+                    conversationLength: { $cond: { if: { $isArray: "$messages" }, then: { $size: "$messages" }, else: "NA" } },
+                    readCursors: 1
                 }
             }));
-            if (!room) {
-                throw new Error("Room not found or user is not a member of the room");
-            }
             return room;
         }
         catch (err) {
@@ -366,17 +364,17 @@ class RoomsController extends generic_1.CollectionReference {
    * Update the read cursor for a user in a room.
    * @param roomId - The ID of the room.
    * @param userId - The ID of the user whose read cursor will be updated.
-   * @param lastReadTimestamp - The new last read timestamp for the user.
+   * @param lastReadTimeStamp - The new last read timestamp for the user.
    * @returns A Promise resolving to the count of modified documents (1 if successful, 0 otherwise).
    */
-    async updateReadCursor(roomId, userId, lastReadTimestamp) {
+    async updateReadCursor(roomId, userId, lastReadTimeStamp) {
         var _a;
         try {
             const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
                 _id: new mongodb_1.ObjectId(roomId),
                 "readCursors._id": new mongodb_1.ObjectId(userId)
             }, {
-                $set: { "readCursors.$.lastReadTimestamp": lastReadTimestamp }
+                $set: { "readCursors.$.lastReadTimeStamp": lastReadTimeStamp }
             }));
             return (result === null || result === void 0 ? void 0 : result.modifiedCount) || 0;
         }

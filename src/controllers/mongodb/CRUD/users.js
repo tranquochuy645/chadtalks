@@ -304,7 +304,6 @@ class UsersController extends generic_1.CollectionReference {
     async extractRoomsList(userId) {
         var _a, _b;
         try {
-            // Use the MongoDB aggregation pipeline to efficiently retrieve the rooms list
             const allRoomsOfUser = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.aggregate([
                 // Match the user with the specified ObjectId
                 {
@@ -357,8 +356,22 @@ class UsersController extends generic_1.CollectionReference {
                         "userRooms.isMeeting": 1,
                         "userRooms.meeting_uuid": 1,
                         "userRooms.type": 1,
-                        "userRooms.readCursors": 1,
-                        "userRooms.latestMessage": { $lastN: { n: 1, input: "$userRooms.messages" } } // last message
+                        "userRooms.lastReadTimeStamp": {
+                            $reduce: {
+                                input: "$userRooms.readCursors",
+                                initialValue: null,
+                                in: {
+                                    $cond: [
+                                        { $eq: ["$$this._id", new mongodb_1.ObjectId(userId)] },
+                                        "$$this.lastReadTimeStamp",
+                                        "$$value"
+                                    ]
+                                }
+                            }
+                        },
+                        "userRooms.latestMessage": {
+                            $arrayElemAt: ["$userRooms.messages", -1] // Get the last message from the "messages" array
+                        }
                     }
                 },
                 // Group the documents back to the original structure using $group
@@ -372,7 +385,7 @@ class UsersController extends generic_1.CollectionReference {
                                 isMeeting: "$userRooms.isMeeting",
                                 meeting_uuid: "$userRooms.meeting_uuid",
                                 type: "$userRooms.type",
-                                readCursors: "$userRooms.readCursors",
+                                lastReadTimeStamp: "$userRooms.lastReadTimeStamp",
                                 latestMessage: "$userRooms.latestMessage"
                             }
                         }
@@ -382,8 +395,9 @@ class UsersController extends generic_1.CollectionReference {
             // Return the rooms array of the first document (user) in the result
             return ((_b = allRoomsOfUser[0]) === null || _b === void 0 ? void 0 : _b.rooms) || [];
         }
-        catch (e) {
-            throw e;
+        catch (err) {
+            const errStacked = new Error(`Error in extractRoom: ${err.message}`);
+            throw errStacked;
         }
     }
 }

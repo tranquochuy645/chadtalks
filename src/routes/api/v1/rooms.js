@@ -55,18 +55,20 @@ router.get('/:id', jwt_1.verifyToken, async (req, res) => {
         });
     }
     // Parse the 'skip' parameter from the query string. Default to 0 if not provided or invalid.
-    const skip = parseInt(req.query.skip, 10) || 0;
+    const skip = parseInt(req.query.skip, 10);
     // Parse the 'limit' parameter from the query string. Default to 30 if not provided or invalid.
     const limit = parseInt(req.query.limit, 10) || 30;
     try {
         // Retrieve the messages for the specified room, limited by 'limit' and skipped by 'skip', using the data controller.
-        const data = await mongodb_2.chatAppDbController.rooms.getMessages(req.headers.userId, req.params.id, limit, skip);
+        const data = await mongodb_2.chatAppDbController.rooms.getConversationData(req.headers.userId, req.params.id, limit, skip);
         // If the user is not a member of this room or the room is not found, respond with a 404 status and a corresponding message.
-        if (!data || data.length === 0) {
+        if (!data) {
             throw new Error('Room not found or not a member of this room');
         }
         // Respond with a 200 status and the retrieved room messages.
         res.status(200).json(data);
+        //signal for client to refresh this room data
+        socket_1.ioController.io.to(req.params.id).emit('seen', [req.params.id, req.headers.userId, new Date()]);
         mongodb_2.chatAppDbController.rooms.updateReadCursor(req.params.id, req.headers.userId, new Date());
     }
     catch (err) {
