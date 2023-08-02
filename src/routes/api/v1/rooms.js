@@ -181,8 +181,8 @@ router.put('/:id', jwt_1.verifyToken, async (req, res) => {
                 }
                 // Add the user to the socket.io room for the room.
                 socket_1.ioController.addToRoom(req.headers.userId, req.params.id);
-                // Emit a 'room' event to the user's socket.io room to signal refreshing the rooms list.
-                socket_1.ioController.io.to(req.headers.userId).emit('room');
+                // Emit a 'room' event to signal refreshing the rooms list.
+                socket_1.ioController.io.to(req.params.id).emit('room');
                 // Respond with a 200 status and a success message after successfully joining the room.
                 return res.status(200).json({ message: "ok" });
             case 'refuse':
