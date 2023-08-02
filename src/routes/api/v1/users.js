@@ -40,6 +40,9 @@ router.get('/:id', async (req, res) => {
             return res.status(400).json({ message: "ID passed in must be a string of 12 bytes or a string of 24 hex characters or an integer" });
         }
         const data = await mongodb_1.chatAppDbController.users.readShortProfile(req.params.id);
+        if (!data) {
+            return res.status(404).json({ message: "User not found" });
+        }
         res.status(200).json(data);
     }
     catch (err) {

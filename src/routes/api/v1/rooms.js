@@ -22,7 +22,7 @@ router.get('/', jwt_1.verifyToken, async (req, res) => {
         const roomsInfo = await mongodb_2.chatAppDbController.users.extractRoomsList(userId);
         // If no rooms found, respond with a 404 status and a corresponding message.
         if (!roomsInfo || roomsInfo.length === 0) {
-            return res.status(404).json({ message: "User not found or no rooms available" });
+            return res.status(404).json({ message: "No room available" });
         }
         // Respond with a 200 status and the retrieved room information.
         res.status(200).json(roomsInfo);
