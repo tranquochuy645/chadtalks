@@ -49,9 +49,8 @@ class RoomsController extends generic_1.CollectionReference {
      * @returns A Promise resolving to the inserted room objectId
      */
     async createRoom(creator, invited, type = "default") {
-        var _a;
         try {
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.insertOne(new Room(creator, invited, type)));
+            const result = await this._collection.insertOne(new Room(creator, invited, type));
             if (result && result.insertedId) {
                 return result.insertedId;
             }
@@ -69,10 +68,9 @@ class RoomsController extends generic_1.CollectionReference {
      * @throws Error if the room is not found or the user is not a member of the room.
      */
     async getRoomsInfo(roomOIds) {
-        var _a;
         try {
             // Use the $in operator to find rooms with matching _id in the provided array of roomIds
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.find({ _id: { $in: roomOIds } }, // Use $in operator to match any of the provided roomIds
+            const result = await this._collection.find({ _id: { $in: roomOIds } }, // Use $in operator to match any of the provided roomIds
             {
                 projection: {
                     _id: 1,
@@ -80,7 +78,7 @@ class RoomsController extends generic_1.CollectionReference {
                     isMeeting: 1,
                     meeting_uuid: 1
                 }
-            }).toArray());
+            }).toArray();
             if (!result || result.length === 0) {
                 throw new Error("Room not found or user is not a member of the room");
             }
@@ -101,9 +99,8 @@ class RoomsController extends generic_1.CollectionReference {
      * @throws Error if the room is not found or the user is not a member of the room.
      */
     async getConversationData(whoSearch, roomId, messagesLimit, skip) {
-        var _a;
         try {
-            const room = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({
+            const room = await this._collection.findOne({
                 _id: new mongodb_1.ObjectId(roomId),
                 participants: new mongodb_1.ObjectId(whoSearch)
             }, {
@@ -115,7 +112,7 @@ class RoomsController extends generic_1.CollectionReference {
                     conversationLength: { $cond: { if: { $isArray: "$messages" }, then: { $size: "$messages" }, else: "NA" } },
                     readCursors: 1
                 }
-            }));
+            });
             return room;
         }
         catch (err) {
@@ -130,15 +127,14 @@ class RoomsController extends generic_1.CollectionReference {
      * @returns A Promise resolving to the count of modified documents.
      */
     async addToInvitedList(userId, roomId) {
-        var _a;
         try {
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
+            const result = await this._collection.updateOne({
                 _id: new mongodb_1.ObjectId(roomId)
             }, {
                 $addToSet: {
                     invited: new mongodb_1.ObjectId(userId)
                 }
-            }));
+            });
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
         }
         catch (err) {
@@ -153,15 +149,14 @@ class RoomsController extends generic_1.CollectionReference {
      * @returns A Promise resolving to the count of modified documents.
      */
     async pullFromInvitedList(whoAsked, roomId) {
-        var _a;
         try {
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
+            const result = await this._collection.updateOne({
                 _id: new mongodb_1.ObjectId(roomId)
             }, {
                 $pull: {
                     invited: new mongodb_1.ObjectId(whoAsked)
                 }
-            }));
+            });
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
         }
         catch (err) {
@@ -176,15 +171,14 @@ class RoomsController extends generic_1.CollectionReference {
      * @returns A Promise resolving to the count of modified documents.
      */
     async addParticipant(whoAsked, roomId) {
-        var _a;
         try {
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
+            const result = await this._collection.updateOne({
                 _id: new mongodb_1.ObjectId(roomId),
                 invited: { $elemMatch: { $eq: new mongodb_1.ObjectId(whoAsked) } }
             }, {
                 $addToSet: { participants: new mongodb_1.ObjectId(whoAsked), readCursors: new ReadCursor(whoAsked) },
                 $pull: { invited: new mongodb_1.ObjectId(whoAsked) }
-            }));
+            });
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
         }
         catch (err) {
@@ -198,7 +192,6 @@ class RoomsController extends generic_1.CollectionReference {
      * @returns A Promise resolving to the count of modified documents.
      */
     async removeUserFromAllRooms(userId) {
-        var _a, _b;
         try {
             // Filter to find rooms where the user is a participant or invited
             const filter = {
@@ -216,11 +209,11 @@ class RoomsController extends generic_1.CollectionReference {
                 },
             };
             // Use find to get all matching rooms
-            const rooms = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.find(filter, { projection: { _id: 1 } }).toArray());
+            const rooms = await this._collection.find(filter, { projection: { _id: 1 } }).toArray();
             let modifiedCount = 0;
             // Use a for...of loop to ensure each update operation is executed sequentially
             for (const room of rooms) {
-                const result = await ((_b = this._collection) === null || _b === void 0 ? void 0 : _b.updateOne({ _id: new mongodb_1.ObjectId(room._id) }, update));
+                const result = await this._collection.updateOne({ _id: new mongodb_1.ObjectId(room._id) }, update);
                 if (result === null || result === void 0 ? void 0 : result.modifiedCount) {
                     modifiedCount += result.modifiedCount;
                 }
@@ -241,10 +234,9 @@ class RoomsController extends generic_1.CollectionReference {
     * @returns A Promise resolving to the count of modified documents.
     */
     setMeeting(roomId, uuid) {
-        var _a, _b;
         if (uuid)
-            return (_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: true, meeting_uuid: uuid } });
-        return (_b = this._collection) === null || _b === void 0 ? void 0 : _b.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: false, meeting_uuid: null } });
+            return this._collection.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: true, meeting_uuid: uuid } });
+        return this._collection.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $set: { isMeeting: false, meeting_uuid: null } });
     }
     /**
    * Check the meeting status and UUID for a room.
@@ -253,15 +245,14 @@ class RoomsController extends generic_1.CollectionReference {
    *          If the room is not found, it will return null.
    */
     async checkMeeting(roomId) {
-        var _a;
         try {
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({ _id: new mongodb_1.ObjectId(roomId) }, {
+            const result = await this._collection.findOne({ _id: new mongodb_1.ObjectId(roomId) }, {
                 projection: {
                     _id: 0,
                     isMeeting: 1,
                     meeting_uuid: 1
                 }
-            }));
+            });
             if (!result) {
                 // If the room is not found, return null
                 return null;
@@ -286,7 +277,6 @@ class RoomsController extends generic_1.CollectionReference {
    * @throws Error if there's an issue while saving the message.
    */
     async saveMessage(sender, roomId, content, timestamp, urls) {
-        var _a;
         try {
             const data = {
                 sender: new mongodb_1.ObjectId(sender),
@@ -294,7 +284,7 @@ class RoomsController extends generic_1.CollectionReference {
                 timestamp,
                 urls
             };
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $push: { messages: data } }));
+            const result = await this._collection.updateOne({ _id: new mongodb_1.ObjectId(roomId) }, { $push: { messages: data } });
             console.log("Saved message: " + (result === null || result === void 0 ? void 0 : result.modifiedCount));
         }
         catch (e) {
@@ -312,18 +302,18 @@ class RoomsController extends generic_1.CollectionReference {
      * @throws Error if there's an issue with the deletion process.
      */
     async deleteRoom(roomId, whoAsked) {
-        var _a, _b, _c;
+        var _a;
         try {
-            const room = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.findOne({ _id: new mongodb_1.ObjectId(roomId) }));
+            const room = await this._collection.findOne({ _id: new mongodb_1.ObjectId(roomId) });
             if (!room) {
                 return 404; // Room not found
             }
             // Check if the user requesting deletion is the admin of the room
-            if (!((_b = room.admin) === null || _b === void 0 ? void 0 : _b.equals(new mongodb_1.ObjectId(whoAsked)))) {
+            if (!((_a = room.admin) === null || _a === void 0 ? void 0 : _a.equals(new mongodb_1.ObjectId(whoAsked)))) {
                 return 403; // User is not the admin of the room
             }
             // Delete the room
-            const result = await ((_c = this._collection) === null || _c === void 0 ? void 0 : _c.deleteOne({ _id: new mongodb_1.ObjectId(roomId) }));
+            const result = await this._collection.deleteOne({ _id: new mongodb_1.ObjectId(roomId) });
             // Check if the deletion was successful
             if ((result === null || result === void 0 ? void 0 : result.deletedCount) === 1) {
                 return 200; // Room deleted successfully
@@ -342,9 +332,8 @@ class RoomsController extends generic_1.CollectionReference {
    * @returns A Promise resolving to the count of modified documents.
    */
     async removeParticipant(participantId, roomId) {
-        var _a;
         try {
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
+            const result = await this._collection.updateOne({
                 _id: new mongodb_1.ObjectId(roomId),
                 participants: { $elemMatch: { $eq: new mongodb_1.ObjectId(participantId) } }
             }, {
@@ -352,7 +341,7 @@ class RoomsController extends generic_1.CollectionReference {
                     readCursors: { _id: new mongodb_1.ObjectId(participantId) },
                     participants: new mongodb_1.ObjectId(participantId)
                 }
-            }));
+            });
             return result === null || result === void 0 ? void 0 : result.modifiedCount;
         }
         catch (err) {
@@ -368,14 +357,13 @@ class RoomsController extends generic_1.CollectionReference {
    * @returns A Promise resolving to the count of modified documents (1 if successful, 0 otherwise).
    */
     async updateReadCursor(roomId, userId, lastReadTimeStamp) {
-        var _a;
         try {
-            const result = await ((_a = this._collection) === null || _a === void 0 ? void 0 : _a.updateOne({
+            const result = await this._collection.updateOne({
                 _id: new mongodb_1.ObjectId(roomId),
                 "readCursors._id": new mongodb_1.ObjectId(userId)
             }, {
                 $set: { "readCursors.$.lastReadTimeStamp": lastReadTimeStamp }
-            }));
+            });
             return (result === null || result === void 0 ? void 0 : result.modifiedCount) || 0;
         }
         catch (err) {
