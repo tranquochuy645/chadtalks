@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DefaultProfileImage = void 0;
-const FileWriter_1 = require("../../../FileWriter");
+const FileWriter_1 = require("../FileWriter");
 class DefaultProfileImage {
     /**
      * Create a DefaultProfileImage instance with the specified initials.

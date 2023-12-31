@@ -448,7 +448,7 @@ class UsersController extends generic_1.CollectionReference {
                         invitations: {
                             $push: {
                                 _id: "$tmp._id",
-                                invitor: { $arrayElemAt: ["$tmp.adminInfo", 0] },
+                                invitor: { $arrayElemAt: ["$tmp.adminInfo", 0] }, // Use $arrayElemAt to extract the single object from the array
                                 type: "$tmp.type"
                             }
                         }

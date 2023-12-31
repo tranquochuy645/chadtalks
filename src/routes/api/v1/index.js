@@ -13,14 +13,14 @@ const search_1 = __importDefault(require("./search"));
 const router = (0, express_1.Router)();
 // Create a rate limiter middleware for general routes
 const generalLimiter = (0, express_rate_limit_1.default)({
-    windowMs: 60 * 1000,
-    max: 1000,
+    windowMs: 60 * 1000, // 1 minute
+    max: 1000, // maximum number of requests allowed in the window
     message: 'Too many requests from this IP, please try again later.',
 });
 // Create a rate limiter middleware specifically for the /auth route
 const authLimiter = (0, express_rate_limit_1.default)({
-    windowMs: 60 * 5000,
-    max: 500,
+    windowMs: 60 * 5000, // 5 minutes
+    max: 500, // maximum number of requests allowed in the window for /auth route
     message: 'Too many requests for authentication from this IP, please try again later.',
 });
 // Mount the authentication routes under the path '/auth' with rate limiting
